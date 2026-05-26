@@ -315,11 +315,11 @@ model BodyWeightEntry {
 }
 
 // ────── XP ──────
-// Audit trail. XP cumulé d'un user = SUM(amount). La contrainte unique
-// rend les events one-shot (THREE_WORKOUTS_CREATED, EMAIL_VERIFIED, AVATAR_SET)
-// idempotents via upsert. Pour les events répétables (WORKOUT_COMPLETED…),
-// la couche service contournera la contrainte (createMany / type discriminant
-// dans metadata) — décision à finaliser au Sprint 4.
+// Audit trail. XP cumulé d'un user = SUM(amount).
+// L'idempotence des events one-shot (THREE_WORKOUTS_CREATED,
+// EMAIL_VERIFIED, AVATAR_SET) est garantie par la logique applicative
+// (features/xp/service.ts), pas par une contrainte SQL — pour pouvoir
+// répéter librement les events WORKOUT_COMPLETED, LIKE_RECEIVED, etc.
 model XpEvent {
   id        String      @id @default(cuid())
   userId    String
@@ -330,8 +330,8 @@ model XpEvent {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, type], name: "uq_oneshot_per_type")
   @@index([userId])
+  @@index([userId, type])
 }
 
 // ────── SUPPORT (membre → admin) ──────

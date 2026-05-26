@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { awardXp } from "@/features/xp/service";
 import { setLogSchema, type SetLogInput } from "./schemas";
 
 async function requireUser() {
@@ -93,10 +94,17 @@ export async function endSessionAction(sessionId: string, notes: string | null) 
     },
   });
 
-  // TODO Sprint 4 : awardXp(WORKOUT_COMPLETED)
-  // TODO Sprint 4 : update PlannedSession.status = COMPLETED si lien
+  // XP répétable : +20 par session terminée
+  await awardXp(session.user.id, "WORKOUT_COMPLETED");
+
+  // Si la session était liée à une séance planifiée, marque comme COMPLETED
+  await db.plannedSession.updateMany({
+    where: { sessionId: ws.id, status: "SCHEDULED" },
+    data: { status: "COMPLETED" },
+  });
 
   revalidatePath("/workouts");
+  revalidatePath("/calendar");
   revalidatePath(`/workouts/${ws.workoutId}`);
 }
 

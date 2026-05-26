@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { awardXp } from "@/features/xp/service";
 import { workoutFormSchema } from "./schemas";
 import { createWorkout, updateWorkoutWithNewVersion } from "./versioning";
 
@@ -59,6 +60,14 @@ export async function createWorkoutAction(
   }
 
   const created = await createWorkout(session.user.id, parsed.data);
+
+  // XP one-shot : +50 dès que l'utilisateur a 3 séances créées.
+  const count = await db.workout.count({
+    where: { authorId: session.user.id, deletedAt: null },
+  });
+  if (count >= 3) {
+    await awardXp(session.user.id, "THREE_WORKOUTS_CREATED");
+  }
 
   revalidatePath("/workouts");
   redirect(`/workouts/${created.id}`);
