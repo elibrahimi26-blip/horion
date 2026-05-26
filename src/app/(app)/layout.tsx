@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { NotificationsBell } from "@/components/layout/notifications-bell";
 
 export default async function AppLayout({
   children,
@@ -53,6 +54,7 @@ export default async function AppLayout({
                 Admin
               </Link>
             ) : null}
+            <NotificationsBell />
             <LogoutButton />
           </nav>
         </div>
