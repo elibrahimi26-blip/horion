@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { AuthError } from "next-auth";
 import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email";
+import {
+  adminNewRegistrationEmail,
+  passwordResetEmail,
+} from "./emails";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -60,16 +66,20 @@ export async function registerAction(
 
   const passwordHash = await hashPassword(password);
 
-  await db.user.create({
+  const user = await db.user.create({
     data: {
       email,
       username,
       passwordHash,
       // role = MEMBER, status = PENDING (defaults)
     },
+    select: { username: true, email: true },
   });
 
-  // TODO commit 3 : notifier l'admin par email
+  if (env.ADMIN_EMAIL) {
+    const tpl = adminNewRegistrationEmail(user);
+    await sendEmail({ to: env.ADMIN_EMAIL, ...tpl });
+  }
 
   redirect("/login?registered=true");
 }
@@ -155,10 +165,8 @@ export async function forgotPasswordAction(
     },
   });
 
-  // TODO commit 3 : envoyer l'email via Resend
-  console.log(
-    `[email stub] Reset link for ${parsed.data.email}: /reset-password?token=${token}`,
-  );
+  const tpl = passwordResetEmail(token);
+  await sendEmail({ to: parsed.data.email, ...tpl });
 
   return { status: "success" };
 }
