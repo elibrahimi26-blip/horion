@@ -30,6 +30,12 @@ export default async function AppLayout({
             <Link href="/dashboard" className="hover:underline">
               Dashboard
             </Link>
+            <Link href="/workouts" className="hover:underline">
+              Séances
+            </Link>
+            <Link href="/library" className="hover:underline">
+              Bibliothèque
+            </Link>
             <Link href="/profile" className="hover:underline">
               Profil
             </Link>
