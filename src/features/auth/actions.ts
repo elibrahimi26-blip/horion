@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email";
+import { seedDefaultCategories } from "@/features/categories/service";
 import {
   adminNewRegistrationEmail,
   passwordResetEmail,
@@ -73,8 +74,11 @@ export async function registerAction(
       passwordHash,
       // role = MEMBER, status = PENDING (defaults)
     },
-    select: { username: true, email: true },
+    select: { id: true, username: true, email: true },
   });
+
+  // Seed les 5 catégories par défaut (Push/Pull/Legs/Cardio/Full Body)
+  await seedDefaultCategories(user.id);
 
   if (env.ADMIN_EMAIL) {
     const tpl = adminNewRegistrationEmail(user);
