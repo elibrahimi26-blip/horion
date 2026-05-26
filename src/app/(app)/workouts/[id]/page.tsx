@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { WorkoutActions } from "@/components/workout/workout-actions";
+import { WorkoutSocialActions } from "@/components/workout/workout-social-actions";
 import { auth } from "@/lib/auth";
 import { getWorkoutWithCurrentVersion } from "@/features/workouts/queries";
+import { getWorkoutSocialState } from "@/features/social/queries";
 
 export default async function WorkoutDetailPage({
   params,
@@ -20,6 +22,10 @@ export default async function WorkoutDetailPage({
   if (!currentVersion) notFound();
 
   const isAuthor = workout.authorId === session.user.id;
+  const social =
+    workout.visibility === "PUBLIC"
+      ? await getWorkoutSocialState(workout.id, session.user.id)
+      : null;
 
   return (
     <div className="space-y-6">
@@ -45,20 +51,32 @@ export default async function WorkoutDetailPage({
           ) : null}
         </div>
 
-        {isAuthor ? (
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm">
-              <Link href={`/workouts/${workout.id}/run`}>Lancer la séance</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/workouts/${workout.id}/edit`}>Modifier</Link>
-            </Button>
-            <WorkoutActions
+        <div className="flex flex-wrap gap-2">
+          {social ? (
+            <WorkoutSocialActions
               workoutId={workout.id}
-              currentVisibility={workout.visibility}
+              likeCount={social.likeCount}
+              saveCount={social.saveCount}
+              likedByMe={social.likedByMe}
+              savedByMe={social.savedByMe}
+              isAuthor={isAuthor}
             />
-          </div>
-        ) : null}
+          ) : null}
+          {isAuthor ? (
+            <>
+              <Button asChild size="sm">
+                <Link href={`/workouts/${workout.id}/run`}>Lancer la séance</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/workouts/${workout.id}/edit`}>Modifier</Link>
+              </Button>
+              <WorkoutActions
+                workoutId={workout.id}
+                currentVisibility={workout.visibility}
+              />
+            </>
+          ) : null}
+        </div>
       </div>
 
       {workout.description ? (
