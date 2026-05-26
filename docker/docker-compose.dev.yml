@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: horion-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: horion
+      POSTGRES_PASSWORD: horion
+      POSTGRES_DB: horion
+    ports:
+      - "5432:5432"
+    volumes:
+      - horion_postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U horion -d horion"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  horion_postgres_dev:
