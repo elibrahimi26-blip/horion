@@ -43,6 +43,9 @@ export default async function AppLayout({
             <Link href="/library" className="hover:underline">
               Bibliothèque
             </Link>
+            <Link href="/messages" className="hover:underline">
+              Messages
+            </Link>
             <Link href="/profile" className="hover:underline">
               Profil
             </Link>

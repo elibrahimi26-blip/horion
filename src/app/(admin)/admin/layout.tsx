@@ -29,6 +29,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/exercises" className="hover:underline">
               Exercices
             </Link>
+            <Link href="/admin/messages" className="hover:underline">
+              Conversations
+            </Link>
+            <Link href="/admin/support" className="hover:underline">
+              Support
+            </Link>
             <Link
               href="/dashboard"
               className="text-muted-foreground hover:underline"
