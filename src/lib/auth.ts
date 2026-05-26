@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { authConfig } from "./auth.config";
 import { db } from "./db";
+import { emailSchema } from "@/features/auth/schemas";
 
 // Note : Auth.js v5 + Credentials provider impose la stratégie JWT
 // (les DB sessions ne sont pas supportées nativement avec Credentials).
@@ -11,8 +12,10 @@ import { db } from "./db";
 // disponible dans le schéma pour un futur tracking manuel des sessions
 // actives (ex : "déconnecter tous les appareils"). À retravailler si besoin.
 
+// On réutilise emailSchema (avec .toLowerCase()) pour normaliser
+// l'email à l'authentification comme à l'inscription.
 const credentialsSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(1),
 });
 
