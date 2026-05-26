@@ -47,6 +47,9 @@ export default async function WorkoutDetailPage({
 
         {isAuthor ? (
           <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href={`/workouts/${workout.id}/run`}>Lancer la séance</Link>
+            </Button>
             <Button asChild variant="outline" size="sm">
               <Link href={`/workouts/${workout.id}/edit`}>Modifier</Link>
             </Button>
