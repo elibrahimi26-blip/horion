@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 import {
+  useOfflineQueue,
+  useSessionPendingSets,
+} from "@/hooks/use-offline-queue";
+import {
   formatDuration,
   useElapsedSeconds,
   useRestTimer,
@@ -15,7 +19,6 @@ import {
 import {
   cancelSessionAction,
   endSessionAction,
-  saveSetAction,
 } from "@/features/sessions/actions";
 
 type ExerciseLine = {
@@ -81,6 +84,22 @@ export function RunSession({
   useWakeLock(true);
   const elapsed = useElapsedSeconds(startedAt);
   const rest = useRestTimer();
+  const { saveSet, pendingCount, isOnline } = useOfflineQueue();
+  const queuedForSession = useSessionPendingSets(sessionId);
+
+  // Merge des sets en queue (créés hors-ligne lors d'une précédente
+  // visite) dans la map completed au montage.
+  useEffect(() => {
+    if (queuedForSession.length === 0) return;
+    setCompleted((prev) => {
+      const next = { ...prev };
+      for (const q of queuedForSession) {
+        const cur = next[q.exerciseId] ?? 0;
+        if (q.setNumber > cur) next[q.exerciseId] = q.setNumber;
+      }
+      return next;
+    });
+  }, [queuedForSession]);
 
   const current = exercises[currentIdx];
 
@@ -114,7 +133,7 @@ export function RunSession({
 
     startTransition(async () => {
       try {
-        await saveSetAction({
+        await saveSet({
           sessionId,
           exerciseId: current.exerciseId,
           setNumber: nextSetNumber,
@@ -123,17 +142,17 @@ export function RunSession({
           durationSec: current.isCardio ? repsOrDuration : null,
         });
 
+        // Avance le compteur que la série soit partie au serveur ou
+        // mise en queue : dans les deux cas elle est durablement enregistrée.
         setCompleted({
           ...completed,
           [current.exerciseId]: nextSetNumber,
         });
 
-        // Démarre le repos si défini et qu'il reste des séries
         if (current.restSeconds && nextSetNumber < current.targetSets) {
           rest.start(current.restSeconds);
         }
       } catch (e) {
-        // TODO commit 3 : offline queue (IndexedDB) au lieu d'erreur visible
         const msg = e instanceof Error ? e.message : "Erreur d'enregistrement";
         setSaveError(`${msg} — réessaie dans un instant.`);
       }
@@ -171,11 +190,25 @@ export function RunSession({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="space-y-1">
           <h2 className="text-xl font-bold">{workout.name}</h2>
           <p className="text-sm tabular-nums text-muted-foreground">
             Session en cours · {formatDuration(elapsed)}
           </p>
+          {!isOnline || pendingCount > 0 ? (
+            <div className="flex flex-wrap gap-2 text-xs">
+              {!isOnline ? (
+                <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-900">
+                  Hors-ligne — sauvegarde locale active
+                </span>
+              ) : null}
+              {pendingCount > 0 ? (
+                <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-900">
+                  {pendingCount} série{pendingCount > 1 ? "s" : ""} en attente de sync
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <div className="flex gap-2">
           <Button
