@@ -1,0 +1,412 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────── ENUMS ──────
+enum Role {
+  MEMBER
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum WorkoutVisibility {
+  PRIVATE
+  PUBLIC
+}
+
+enum PlannedStatus {
+  SCHEDULED
+  COMPLETED
+  MISSED
+  CANCELLED
+}
+
+enum ThreadStatus {
+  OPEN
+  CLOSED
+}
+
+enum XpEventType {
+  THREE_WORKOUTS_CREATED
+  EMAIL_VERIFIED
+  AVATAR_SET
+  WORKOUT_COMPLETED
+  LIKE_RECEIVED
+  STREAK_BONUS
+}
+
+enum NotificationType {
+  ACCOUNT_VALIDATED
+  NEW_PRIVATE_MESSAGE
+  NEW_SUPPORT_REPLY
+  WORKOUT_LIKED
+  WORKOUT_SAVED
+  LEVEL_UP
+  ADMIN_BROADCAST
+}
+
+// ────── USER & AUTH ──────
+model User {
+  id                   String     @id @default(cuid())
+  email                String     @unique
+  username             String     @unique
+  passwordHash         String
+  role                 Role       @default(MEMBER)
+  status               UserStatus @default(PENDING)
+  emailVerifiedAt      DateTime?
+  usernameChangesCount Int        @default(0)
+  usernameLocked       Boolean    @default(false)
+  avatarUrl            String?
+  bio                  String?    @db.Text
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  lastLoginAt          DateTime?
+
+  sessions               AuthSession[]
+  workouts               Workout[]        @relation("WorkoutAuthor")
+  workoutLikes           WorkoutLike[]
+  workoutSaves           WorkoutSave[]
+  workoutCategories      WorkoutCategory[]
+  plannedSessions        PlannedSession[]
+  workoutSessions        WorkoutSession[]
+  bodyWeights            BodyWeightEntry[]
+  xpEvents               XpEvent[]
+  supportThreads         SupportThread[]
+  supportMessages        SupportMessage[]  @relation("SupportSender")
+  privateThreadsAsMember PrivateThread[]   @relation("MemberThreads")
+  privateThreadsAsAdmin  PrivateThread[]   @relation("AdminThreads")
+  privateMessages        PrivateMessage[]  @relation("PrivateSender")
+  notifications          Notification[]
+
+  @@index([status])
+  @@index([role])
+}
+
+model AuthSession {
+  id      String   @id
+  userId  String
+  expires DateTime
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  type      String // "email_verify" | "password_reset"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ────── EXERCISES (admin) ──────
+model MuscleGroup {
+  id        String           @id @default(cuid())
+  slug      String           @unique // "chest", "back", "quads"…
+  name      String // "Pectoraux"
+  bodyPart  String // "upper" | "lower" | "core"
+  exercises ExerciseMuscle[]
+}
+
+model Exercise {
+  id               String    @id @default(cuid())
+  name             String
+  description      String?   @db.Text
+  mediaUrl         String? // GIF / image hébergé sur R2
+  estimatedSeconds Int?
+  isCardio         Boolean   @default(false)
+  archivedAt       DateTime? // soft delete pour préserver versions
+  createdAt        DateTime  @default(now())
+
+  muscles                 ExerciseMuscle[]
+  workoutVersionExercises WorkoutVersionExercise[]
+  sessionSets             SessionSet[]
+
+  @@index([name])
+  @@index([archivedAt])
+}
+
+model ExerciseMuscle {
+  exerciseId    String
+  muscleGroupId String
+  isPrimary     Boolean @default(true)
+
+  exercise    Exercise    @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  muscleGroup MuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseId, muscleGroupId])
+}
+
+// ────── WORKOUTS (versioned) ──────
+model Workout {
+  id             String            @id @default(cuid())
+  authorId       String
+  name           String
+  description    String?           @db.Text
+  visibility     WorkoutVisibility @default(PRIVATE)
+  currentVersion Int               @default(1)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+
+  author          User             @relation("WorkoutAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  versions        WorkoutVersion[]
+  likes           WorkoutLike[]
+  saves           WorkoutSave[]
+  sessions        WorkoutSession[]
+  plannedSessions PlannedSession[]
+
+  @@index([authorId])
+  @@index([visibility, deletedAt])
+}
+
+model WorkoutVersion {
+  id        String   @id @default(cuid())
+  workoutId String
+  version   Int
+  name      String // snapshot pour conserver l'identité historique
+  createdAt DateTime @default(now())
+
+  workout   Workout                  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exercises WorkoutVersionExercise[]
+  sessions  WorkoutSession[]
+
+  @@unique([workoutId, version])
+}
+
+model WorkoutVersionExercise {
+  id               String  @id @default(cuid())
+  workoutVersionId String
+  exerciseId       String
+  orderIndex       Int
+  targetSets       Int
+  targetReps       String? // "8-12", "10", "AMRAP"
+  targetWeightKg   Float?
+  restSeconds      Int?
+  notes            String?
+
+  workoutVersion WorkoutVersion @relation(fields: [workoutVersionId], references: [id], onDelete: Cascade)
+  exercise       Exercise       @relation(fields: [exerciseId], references: [id])
+
+  @@index([workoutVersionId, orderIndex])
+}
+
+// ────── SOCIAL ──────
+model WorkoutLike {
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workoutId, userId])
+  @@index([userId])
+}
+
+model WorkoutSave {
+  workoutId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workoutId, userId])
+  @@index([userId])
+}
+
+// ────── CALENDAR ──────
+model WorkoutCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  color     String // hex code (#RRGGBB)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plannedSessions PlannedSession[]
+
+  @@unique([userId, name])
+}
+
+model PlannedSession {
+  id           String        @id @default(cuid())
+  userId       String
+  workoutId    String
+  scheduledFor DateTime
+  categoryId   String?
+  notes        String?
+  status       PlannedStatus @default(SCHEDULED)
+  sessionId    String?       @unique
+  createdAt    DateTime      @default(now())
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout  Workout          @relation(fields: [workoutId], references: [id])
+  category WorkoutCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  session  WorkoutSession?  @relation(fields: [sessionId], references: [id])
+
+  @@index([userId, scheduledFor])
+  @@index([userId, status])
+}
+
+// ────── EXECUTION ──────
+model WorkoutSession {
+  id               String    @id @default(cuid())
+  userId           String
+  workoutId        String
+  workoutVersionId String
+  startedAt        DateTime  @default(now())
+  endedAt          DateTime?
+  durationSec      Int?
+  notes            String?
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout        Workout         @relation(fields: [workoutId], references: [id])
+  workoutVersion WorkoutVersion  @relation(fields: [workoutVersionId], references: [id])
+  sets           SessionSet[]
+  planned        PlannedSession?
+
+  @@index([userId, startedAt])
+  @@index([workoutId])
+}
+
+model SessionSet {
+  id          String  @id @default(cuid())
+  sessionId   String
+  exerciseId  String
+  setNumber   Int
+  weightKg    Float?
+  reps        Int?
+  durationSec Int? // pour cardio
+  restSec     Int?
+  completed   Boolean @default(true)
+
+  session  WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise Exercise       @relation(fields: [exerciseId], references: [id])
+
+  @@index([sessionId])
+}
+
+// ────── BODY METRICS ──────
+model BodyWeightEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  weightKg   Float
+  recordedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+}
+
+// ────── XP ──────
+// Audit trail. XP cumulé d'un user = SUM(amount). La contrainte unique
+// rend les events one-shot (THREE_WORKOUTS_CREATED, EMAIL_VERIFIED, AVATAR_SET)
+// idempotents via upsert. Pour les events répétables (WORKOUT_COMPLETED…),
+// la couche service contournera la contrainte (createMany / type discriminant
+// dans metadata) — décision à finaliser au Sprint 4.
+model XpEvent {
+  id        String      @id @default(cuid())
+  userId    String
+  type      XpEventType
+  amount    Int
+  metadata  Json?
+  createdAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type], name: "uq_oneshot_per_type")
+  @@index([userId])
+}
+
+// ────── SUPPORT (membre → admin) ──────
+model SupportThread {
+  id            String       @id @default(cuid())
+  userId        String
+  subject       String
+  status        ThreadStatus @default(OPEN)
+  lastMessageAt DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+
+  @@index([userId])
+  @@index([status, lastMessageAt])
+}
+
+model SupportMessage {
+  id        String    @id @default(cuid())
+  threadId  String
+  senderId  String
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  thread SupportThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User          @relation("SupportSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+// ────── PRIVATE MESSAGING (admin ↔ membre) ──────
+model PrivateThread {
+  id            String   @id @default(cuid())
+  memberId      String
+  adminId       String
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  member   User             @relation("MemberThreads", fields: [memberId], references: [id], onDelete: Cascade)
+  admin    User             @relation("AdminThreads", fields: [adminId], references: [id], onDelete: Cascade)
+  messages PrivateMessage[]
+
+  @@unique([memberId, adminId])
+  @@index([memberId])
+  @@index([adminId])
+}
+
+model PrivateMessage {
+  id        String    @id @default(cuid())
+  threadId  String
+  senderId  String
+  body      String    @db.Text
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  thread PrivateThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User          @relation("PrivateSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+// ────── NOTIFICATIONS ──────
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  url       String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
