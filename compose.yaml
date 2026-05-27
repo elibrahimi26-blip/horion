@@ -22,7 +22,7 @@ services:
     image: horion-app:latest
     container_name: horion-app
     restart: unless-stopped
-    env_file: .env.production
+    env_file: .env
     depends_on:
       db:
         condition: service_healthy
