@@ -10,7 +10,7 @@ import {
   updateBioAction,
   updateUsernameAction,
 } from "@/features/profile/actions";
-import { MAX_USERNAME_CHANGES } from "@/features/auth/service";
+import { MAX_USERNAME_CHANGES } from "@/features/auth/constants";
 
 type Props = {
   user: {

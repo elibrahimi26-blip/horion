@@ -1,10 +1,8 @@
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
+import { BCRYPT_COST } from "./constants";
 
-export const BCRYPT_COST = 12;
-export const EMAIL_VERIFY_EXPIRY_HOURS = 24;
-export const PASSWORD_RESET_EXPIRY_HOURS = 1;
-export const MAX_USERNAME_CHANGES = 2;
+export * from "./constants";
 
 export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, BCRYPT_COST);
