@@ -5,14 +5,7 @@ import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MAX_USERNAME_CHANGES } from "@/features/auth/service";
 import { updateBioSchema, updateUsernameSchema } from "./schemas";
-
-export type ProfileFormState = {
-  status: "idle" | "success" | "error";
-  error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
-
-export const initialProfileState: ProfileFormState = { status: "idle" };
+import type { ProfileFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();

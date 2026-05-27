@@ -7,14 +7,7 @@ import { db } from "@/lib/db";
 import { awardXp } from "@/features/xp/service";
 import { workoutFormSchema } from "./schemas";
 import { createWorkout, updateWorkoutWithNewVersion } from "./versioning";
-
-export type WorkoutFormState = {
-  status: "idle" | "success" | "error";
-  error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
-
-export const initialWorkoutState: WorkoutFormState = { status: "idle" };
+import type { WorkoutFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();

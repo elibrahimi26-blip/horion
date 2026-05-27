@@ -3,7 +3,8 @@
 import { useFormState } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { initialAuthState, loginAction } from "@/features/auth/actions";
+import { loginAction } from "@/features/auth/actions";
+import { initialAuthState } from "@/features/auth/state";
 import { SubmitButton } from "./submit-button";
 
 export function LoginForm() {

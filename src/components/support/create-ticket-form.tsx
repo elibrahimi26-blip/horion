@@ -5,10 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
-import {
-  createTicketAction,
-  initialTicketState,
-} from "@/features/support/actions";
+import { createTicketAction } from "@/features/support/actions";
+import { initialTicketState } from "@/features/support/state";
 
 export function CreateTicketForm() {
   const [state, formAction] = useFormState(

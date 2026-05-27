@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/features/notifications/service";
 import { messageSchema } from "./schemas";
+import type { MessageFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();
@@ -14,9 +15,6 @@ async function requireUser() {
   }
   return session;
 }
-
-export type MessageFormState = { error: string | null };
-export const initialMessageState: MessageFormState = { error: null };
 
 export async function sendPrivateMessageAction(
   threadId: string,

@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
 import {
-  initialProfileState,
   updateBioAction,
   updateUsernameAction,
 } from "@/features/profile/actions";
+import { initialProfileState } from "@/features/profile/state";
 import { MAX_USERNAME_CHANGES } from "@/features/auth/constants";
 
 type Props = {

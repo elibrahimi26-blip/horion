@@ -5,14 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { exerciseFormSchema } from "./schemas";
-
-export type ExerciseFormState = {
-  status: "idle" | "success" | "error";
-  error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
-
-export const initialExerciseState: ExerciseFormState = { status: "idle" };
+import type { ExerciseFormState } from "./state";
 
 async function requireAdmin() {
   const session = await auth();

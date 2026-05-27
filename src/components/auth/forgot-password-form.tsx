@@ -3,7 +3,8 @@
 import { useFormState } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { forgotPasswordAction, initialAuthState } from "@/features/auth/actions";
+import { forgotPasswordAction } from "@/features/auth/actions";
+import { initialAuthState } from "@/features/auth/state";
 import { SubmitButton } from "./submit-button";
 
 export function ForgotPasswordForm() {

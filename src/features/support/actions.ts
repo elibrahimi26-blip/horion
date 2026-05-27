@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/features/notifications/service";
 import { createTicketSchema, supportReplySchema } from "./schemas";
+import type { TicketFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();
@@ -36,9 +37,6 @@ async function notifyAllAdmins(params: {
     ),
   );
 }
-
-export type TicketFormState = { error: string | null };
-export const initialTicketState: TicketFormState = { error: null };
 
 export async function createTicketAction(
   _prev: TicketFormState,

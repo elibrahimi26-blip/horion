@@ -11,7 +11,7 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import {
   initialWorkoutState,
   type WorkoutFormState,
-} from "@/features/workouts/actions";
+} from "@/features/workouts/state";
 
 type ExerciseOption = {
   id: string;

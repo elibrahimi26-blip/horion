@@ -8,9 +8,9 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import {
   createCategoryAction,
   deleteCategoryAction,
-  initialCategoryState,
   updateCategoryAction,
 } from "@/features/categories/actions";
+import { initialCategoryState } from "@/features/categories/state";
 
 type Category = {
   id: string;

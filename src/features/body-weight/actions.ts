@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { bodyWeightSchema } from "./schemas";
+import type { BodyWeightFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();
@@ -12,13 +13,6 @@ async function requireUser() {
   }
   return session;
 }
-
-export type BodyWeightFormState = {
-  status: "idle" | "success" | "error";
-  error?: string;
-};
-
-export const initialBodyWeightState: BodyWeightFormState = { status: "idle" };
 
 export async function logBodyWeightAction(
   _prev: BodyWeightFormState,

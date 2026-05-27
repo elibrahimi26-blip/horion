@@ -4,14 +4,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { categoryFormSchema } from "./schemas";
-
-export type CategoryFormState = {
-  status: "idle" | "success" | "error";
-  error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
-
-export const initialCategoryState: CategoryFormState = { status: "idle" };
+import type { CategoryFormState } from "./state";
 
 async function requireUser() {
   const session = await auth();

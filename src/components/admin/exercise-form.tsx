@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import {
   type ExerciseFormState,
   initialExerciseState,
-} from "@/features/exercises/actions";
+} from "@/features/exercises/state";
 
 type MuscleGroup = {
   id: string;

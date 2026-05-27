@@ -4,10 +4,8 @@ import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
-import {
-  initialMessageState,
-  sendPrivateMessageAction,
-} from "@/features/messaging/actions";
+import { sendPrivateMessageAction } from "@/features/messaging/actions";
+import { initialMessageState } from "@/features/messaging/state";
 import { formatShortTime, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

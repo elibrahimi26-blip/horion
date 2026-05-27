@@ -3,7 +3,8 @@
 import { useFormState } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { initialAuthState, registerAction } from "@/features/auth/actions";
+import { registerAction } from "@/features/auth/actions";
+import { initialAuthState } from "@/features/auth/state";
 import { SubmitButton } from "./submit-button";
 
 export function RegisterForm() {

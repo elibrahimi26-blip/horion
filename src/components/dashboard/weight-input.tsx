@@ -4,10 +4,8 @@ import { useFormState } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/auth/submit-button";
-import {
-  initialBodyWeightState,
-  logBodyWeightAction,
-} from "@/features/body-weight/actions";
+import { logBodyWeightAction } from "@/features/body-weight/actions";
+import { initialBodyWeightState } from "@/features/body-weight/state";
 
 export function WeightInput({ latestKg }: { latestKg: number | null }) {
   const [state, formAction] = useFormState(

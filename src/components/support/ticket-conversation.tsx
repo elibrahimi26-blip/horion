@@ -4,10 +4,8 @@ import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
-import {
-  initialTicketState,
-  replyTicketAction,
-} from "@/features/support/actions";
+import { replyTicketAction } from "@/features/support/actions";
+import { initialTicketState } from "@/features/support/state";
 import { formatRelative, formatShortTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
