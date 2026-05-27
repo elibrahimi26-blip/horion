@@ -8,7 +8,7 @@ WORKDIR /app
 # n'existe pas encore. pnpm install (sans --frozen-lockfile) régénère
 # le lockfile si manquant. Une fois le lockfile commit, les builds sont
 # reproductibles.
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* .npmrc* ./
 RUN corepack enable && pnpm install --prefer-frozen-lockfile
 
 # ────── 2. Build ──────
