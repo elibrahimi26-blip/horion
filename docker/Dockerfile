@@ -22,7 +22,9 @@ RUN corepack enable && pnpm prisma generate && pnpm build
 
 # ────── 3. Runtime (standalone) ──────
 FROM node:20-alpine AS runner
-RUN apk add --no-cache openssl
+# postgresql16-client = pg_dump + psql, requis par /admin/backups pour générer
+# et restaurer les dumps directement depuis l'app.
+RUN apk add --no-cache openssl postgresql16-client
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -30,6 +32,9 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+
+# Dossier des sauvegardes (monté en volume via compose, partagé avec backup-cron)
+RUN mkdir -p /app/backups && chown nextjs:nodejs /app/backups
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

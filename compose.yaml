@@ -28,6 +28,27 @@ services:
         condition: service_healthy
     expose:
       - "3000"
+    volumes:
+      - backups_data:/app/backups
+
+  backup-cron:
+    build:
+      context: .
+      dockerfile: docker/backup-cron.Dockerfile
+    image: horion-backup-cron:latest
+    container_name: horion-backup-cron
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: horion
+      PGDATABASE: horion
+      PGPASSWORD: ${DB_PASSWORD}
+      BACKUP_RETENTION: ${BACKUP_RETENTION:-7}
+    volumes:
+      - backups_data:/backups
+    depends_on:
+      db:
+        condition: service_healthy
 
   caddy:
     image: caddy:2-alpine
@@ -51,3 +72,4 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+  backups_data:

@@ -11,6 +11,10 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Indispensable pour l'upload d'un dump SQL lors d'un restore admin.
+    serverActions: { bodySizeLimit: "500mb" },
+  },
   async headers() {
     return [
       {
