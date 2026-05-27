@@ -4,8 +4,12 @@
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+# pnpm-lock.yaml* (avec étoile) rend la copie tolérante si le lockfile
+# n'existe pas encore. pnpm install (sans --frozen-lockfile) régénère
+# le lockfile si manquant. Une fois le lockfile commit, les builds sont
+# reproductibles.
+COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable && pnpm install --prefer-frozen-lockfile
 
 # ────── 2. Build ──────
 FROM node:20-alpine AS builder

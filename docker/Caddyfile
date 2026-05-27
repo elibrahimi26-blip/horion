@@ -1,0 +1,41 @@
+# Configuration Caddy pour Horion (production)
+# Caddy gère automatiquement le SSL via Let's Encrypt — aucun setup manuel
+# requis tant que le DNS pointe correctement vers le serveur sur port 80/443.
+
+{
+	email {$ADMIN_EMAIL}
+	# Désactive l'admin API exposé (sécurité)
+	admin off
+}
+
+{$DOMAIN} {
+	encode gzip zstd
+
+	# Headers de sécurité (en plus de ceux gérés par Next.js)
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Limite de taille des uploads (avatars + GIF exercices)
+	request_body {
+		max_size 10MB
+	}
+
+	reverse_proxy app:3000 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+	}
+
+	# Logs vers stdout (capturés par docker logs)
+	log {
+		output stdout
+		format console
+		level INFO
+	}
+}
