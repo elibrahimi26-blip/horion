@@ -1,0 +1,49 @@
+name: Deploy to VPS
+
+# Déclenché à chaque push sur main + manuellement depuis l'onglet Actions.
+# Requiert les secrets repo suivants (Settings → Secrets and variables → Actions) :
+#   - VPS_HOST     : IP du VPS (ex : 91.234.5.6)
+#   - VPS_USER     : utilisateur SSH (ex : root)
+#   - VPS_SSH_KEY  : clé privée SSH au format OpenSSH (cf. DEPLOYMENT.md)
+#   - VPS_PORT     : port SSH (optionnel, 22 par défaut)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            cd /opt/horion
+
+            echo "→ Pull du code (branch main)…"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "→ Build + redémarrage des conteneurs…"
+            docker compose up -d --build --remove-orphans
+
+            echo "→ Nettoyage des anciennes images…"
+            docker image prune -f
+
+            echo "→ État des conteneurs :"
+            docker compose ps
+
+            echo "✓ Déploiement OK"
