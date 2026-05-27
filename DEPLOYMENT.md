@@ -60,11 +60,15 @@ pourraient squatter les ports 80/443.
 
 ## Phase 2 — Premier déploiement
 
-### 2.1 Préparer le fichier `.env.production`
+### 2.1 Préparer le fichier `.env`
+
+> ⚠️ Le fichier doit s'appeler `.env` (pas `.env.production`) : c'est le seul
+> nom que Docker Compose lit automatiquement pour résoudre les variables
+> `${DB_PASSWORD}`, `${DOMAIN}` etc. présentes dans `compose.yaml`.
 
 ```bash
-cp .env.production.example .env.production
-nano .env.production
+cp .env.production.example .env
+nano .env
 ```
 
 L'éditeur `nano` s'ouvre. Voici les valeurs à remplir (les autres champs
@@ -216,7 +220,7 @@ s'exécute automatiquement. Tu peux suivre dans l'onglet **Actions** du repo.
 Causes possibles :
 - DNS pas encore propagé (rare avec sslip.io qui est instantané)
 - Ports 80/443 bloqués par le firewall AzurHost (vérifier l'espace client)
-- `DOMAIN` mal formé dans `.env.production`
+- `DOMAIN` mal formé dans `.env`
 
 Vérification :
 ```bash
@@ -276,7 +280,7 @@ Regarde les logs dans l'onglet Actions du repo GitHub. Causes classiques :
 
 - [ ] Tester l'inscription depuis un autre navigateur / mode incognito
 - [ ] Tester la création d'une séance + son exécution + le mode offline
-- [ ] (optionnel) Acheter un vrai domaine + mettre à jour `DOMAIN` dans `.env.production`
+- [ ] (optionnel) Acheter un vrai domaine + mettre à jour `DOMAIN` dans `.env`
 - [ ] (optionnel) Configurer Resend pour les emails transactionnels
 - [ ] (optionnel) Configurer Cloudflare R2 pour les uploads d'avatar
 - [ ] Inviter les premiers membres du groupe
