@@ -26,6 +26,9 @@ function startsWithAny(path: string, prefixes: string[]): boolean {
 }
 
 export const authConfig = {
+  // Indispensable derrière un reverse proxy (Caddy / Nginx) : Auth.js doit faire
+  // confiance au Host header transmis par le proxy pour résoudre les callbacks.
+  trustHost: true,
   pages: {
     signIn: "/login",
   },

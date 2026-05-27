@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const emptyToUndefined = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+  z.string().url().optional(),
+);
+
 const envSchema = z.object({
   // ── Core (required) ──
   DATABASE_URL: z.string().min(1),
@@ -14,7 +19,7 @@ const envSchema = z.object({
   R2_BUCKET_AVATARS: z.string().optional(),
   R2_BUCKET_EXERCISES: z.string().optional(),
   R2_BUCKET_BACKUPS: z.string().optional(),
-  R2_PUBLIC_URL: z.string().url().optional(),
+  R2_PUBLIC_URL: emptyToUndefined,
 
   // ── Email (Resend) ──
   RESEND_API_KEY: z.string().optional(),
@@ -22,7 +27,7 @@ const envSchema = z.object({
   ADMIN_EMAIL: z.string().email().optional(),
 
   // ── Rate limit (Upstash) ──
-  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_URL: emptyToUndefined,
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 });
 
