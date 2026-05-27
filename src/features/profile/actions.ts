@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MAX_USERNAME_CHANGES } from "@/features/auth/service";
 import { updateBioSchema, updateUsernameSchema } from "./schemas";
@@ -116,4 +116,26 @@ export async function updateBioAction(
   revalidatePath("/profile");
   revalidatePath("/profile/settings");
   return { status: "success" };
+}
+
+// Hard delete RGPD (article 17 - droit à l'effacement).
+// La confirmation par re-saisie du pseudo se fait côté client.
+// Toutes les données liées sont supprimées par cascade Prisma.
+export async function deleteMyAccountAction(formData: FormData) {
+  const session = await requireUser();
+
+  // Double-check : la confirmation pseudo doit correspondre
+  const confirmation = formData.get("confirmUsername");
+  const me = await db.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { username: true },
+  });
+  if (confirmation !== me.username) {
+    throw new Error("Confirmation invalide");
+  }
+
+  await db.user.delete({ where: { id: session.user.id } });
+
+  // signOut clear le cookie et redirige (lance NEXT_REDIRECT)
+  await signOut({ redirectTo: "/login?deleted=true" });
 }

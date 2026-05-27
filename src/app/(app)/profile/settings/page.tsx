@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ProfileSettingsForm } from "@/components/profile/profile-settings-form";
 import { CategoriesManager } from "@/components/profile/categories-manager";
+import { RgpdSection } from "@/components/profile/rgpd-section";
 import { listUserCategories } from "@/features/categories/queries";
 
 export default async function ProfileSettingsPage() {
@@ -27,6 +28,7 @@ export default async function ProfileSettingsPage() {
       <h2 className="text-2xl font-bold">Paramètres</h2>
       <ProfileSettingsForm user={user} />
       <CategoriesManager categories={categories} />
+      <RgpdSection username={user.username} />
     </div>
   );
 }

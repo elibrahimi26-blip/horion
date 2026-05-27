@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 type SearchParams = {
   registered?: string;
   reset?: string;
+  deleted?: string;
 };
 
 export default async function LoginPage({
@@ -34,6 +35,12 @@ export default async function LoginPage({
       {searchParams.reset ? (
         <div className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-900">
           Mot de passe réinitialisé. Tu peux te connecter.
+        </div>
+      ) : null}
+
+      {searchParams.deleted ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Ton compte a été supprimé. Toutes tes données ont été effacées.
         </div>
       ) : null}
 
