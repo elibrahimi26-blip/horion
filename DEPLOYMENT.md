@@ -203,8 +203,10 @@ s'exécute automatiquement. Tu peux suivre dans l'onglet **Actions** du repo.
 | Arrêter tout | `docker compose down` |
 | Démarrer | `docker compose up -d` |
 | Pull + rebuild + restart (mise à jour manuelle) | `git pull && docker compose up -d --build` |
-| Backup manuel de la base | `docker compose exec -T db pg_dump -U horion horion > backup-$(date +%Y%m%d).sql` |
-| Restore d'un backup | `cat backup.sql \| docker compose exec -T db psql -U horion horion` |
+| Backup manuel de la base | UI admin `/admin/backups` → « Sauvegarder maintenant ». En CLI : `docker compose exec -T db pg_dump -U horion horion \| gzip > backup-$(date +%Y%m%d).sql.gz` |
+| Restore d'un backup | UI admin `/admin/backups` → bouton « Restaurer » sur une ligne, ou upload du `.sql.gz` |
+| Lister les backups stockés | `docker compose exec backup-cron ls -lh /backups` |
+| Forcer un backup auto | `docker compose exec backup-cron /usr/local/bin/backup-cron.sh` |
 | Console Prisma (Studio) | Pas utilisable en prod, faire un dump + Studio en local |
 | Console psql | `docker compose exec db psql -U horion -d horion` |
 | Voir la conso CPU/RAM | `docker stats` |
@@ -240,17 +242,23 @@ Causes fréquentes :
 
 ### La base de données est corrompue
 
-Restore depuis le backup AzurHost (7 jours glissants) via leur espace client.
+**Option 1 (recommandée)** : depuis l'UI admin si elle répond encore,
+va sur `/admin/backups`, choisis la dernière sauvegarde et clique
+« Restaurer » (tape `RESTORE` pour confirmer).
 
-Ou si tu as des backups locaux :
+**Option 2** : depuis le shell, si l'app ne répond plus —
 ```bash
 docker compose down
 docker volume rm horion_postgres_data
 docker compose up -d db
 sleep 10
-cat dernier-backup.sql | docker compose exec -T db psql -U horion -d horion
-docker compose up -d app caddy
+zcat /var/lib/docker/volumes/horion_backups_data/_data/horion-auto-LATEST.sql.gz \
+  | docker compose exec -T db psql -U horion -d horion
+docker compose up -d app caddy backup-cron
 ```
+
+**Option 3** : restore depuis le backup AzurHost (7 jours glissants) via
+leur espace client.
 
 ### Le déploiement GitHub Actions échoue
 
@@ -273,6 +281,73 @@ Regarde les logs dans l'onglet Actions du repo GitHub. Causes classiques :
 | Upstash Redis (plus tard) | 0 €/mois jusqu'à 10k req/jour | Rate limiting auth |
 | **Total démarrage** | **5 €/mois** | |
 | **Total avec domaine** | **6 €/mois** | |
+
+---
+
+## Système de sauvegarde
+
+Horion embarque un système de sauvegarde complet accessible depuis
+`/admin/backups`.
+
+### Ce qui est inclus
+
+- **Backups automatiques** : un dump compressé `.sql.gz` est généré chaque
+  jour à **03:00** (heure de Paris) par le service Docker `backup-cron`.
+  Rétention par défaut : les **7 dernières** sauvegardes auto. Les plus
+  anciennes sont supprimées automatiquement.
+- **Backups manuels** : bouton « Sauvegarder maintenant » dans l'UI admin.
+  Ces backups ne sont **jamais purgés automatiquement** — c'est ta
+  responsabilité de les supprimer si besoin.
+- **Téléchargement** : chaque ligne du tableau a un bouton « Télécharger »
+  qui stream le fichier directement depuis le serveur. Archive-le où tu
+  veux (Drive, NAS, R2…) — c'est ton miroir externe.
+- **Restauration** :
+  - Depuis un backup déjà stocké sur le VPS : bouton « Restaurer » →
+    tape `RESTORE` pour confirmer
+  - Depuis un fichier local : formulaire d'upload au bas de la page
+    (taille max 500 MB) → tape `RESTORE` pour confirmer
+- **Wipe complet** : la restauration fait `DROP SCHEMA public CASCADE`
+  puis applique le dump. Tout est remplacé.
+
+### Stockage
+
+Les fichiers sont écrits dans un volume Docker dédié `backups_data` monté
+sur :
+- `/app/backups` côté container `app` (pour les actions UI)
+- `/backups` côté container `backup-cron` (pour le cron)
+
+Le volume **survit** aux `docker compose down` (sauf `down -v`). Si tu
+détruis le VPS, tu perds les backups — pense à télécharger les plus
+importants en local régulièrement.
+
+### Modifier la rétention auto
+
+Edite `.env` sur le VPS :
+```
+BACKUP_RETENTION=14
+```
+
+Puis :
+```bash
+docker compose up -d backup-cron
+```
+
+### Tester le cron sans attendre 03:00
+
+```bash
+docker compose exec backup-cron /usr/local/bin/backup-cron.sh
+```
+
+### Cas particulier — restaurer un backup où ton compte admin n'existe pas
+
+Si la sauvegarde a été faite avant la création de ton compte admin, la
+restauration va effacer ton user actuel et tu seras déconnecté. Solution :
+SSH sur le VPS et relance le SQL de promotion :
+
+```bash
+docker compose exec db psql -U horion -d horion -c \
+  "UPDATE \"User\" SET role='ADMIN', status='ACTIVE' WHERE email='ton.email@gmail.com';"
+```
 
 ---
 
