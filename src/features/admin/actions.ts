@@ -75,3 +75,29 @@ export async function unlockUsernameAction(userId: string) {
 
   revalidatePath("/admin/users");
 }
+
+// Hard delete : la cascade Prisma supprime workouts, sessions,
+// messages, notifs, etc. (cf. onDelete: Cascade dans le schéma).
+// Bloqué pour les autres admins (sécurité contre lockout).
+export async function deleteUserAction(userId: string) {
+  const session = await requireAdmin();
+
+  const target = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!target) return;
+  if (target.role === "ADMIN") {
+    throw new Error("Impossible de supprimer un autre admin");
+  }
+  if (userId === session.user.id) {
+    throw new Error(
+      "Utilise /profile/settings pour supprimer ton propre compte",
+    );
+  }
+
+  await db.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/dashboard");
+}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import type { Role, UserStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,10 @@ export function UserRow({ user }: { user: AdminUserRow }) {
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border p-4">
-      <div className="space-y-1">
+      <Link
+        href={`/admin/users/${user.id}`}
+        className="space-y-1 hover:underline"
+      >
         <p className="font-medium">
           {user.username}
           {user.role === "ADMIN" ? (
@@ -54,7 +58,7 @@ export function UserRow({ user }: { user: AdminUserRow }) {
             ? ` · Dernière connexion ${dateFmt.format(user.lastLoginAt)}`
             : " · Jamais connecté"}
         </p>
-      </div>
+      </Link>
 
       <div className="flex flex-wrap gap-2">
         {user.status === "PENDING" ? (
