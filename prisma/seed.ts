@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { ADDITIONAL_MUSCLE_GROUPS } from "../src/features/exercises/yuhonas-mapping";
 
 const prisma = new PrismaClient();
 
@@ -9,7 +10,7 @@ type MuscleSeed = {
   bodyPart: "upper" | "core" | "lower";
 };
 
-const MUSCLES: MuscleSeed[] = [
+const CORE_MUSCLES: MuscleSeed[] = [
   { slug: "chest", name: "Pectoraux", bodyPart: "upper" },
   { slug: "back", name: "Dos", bodyPart: "upper" },
   { slug: "shoulders", name: "Épaules", bodyPart: "upper" },
@@ -23,6 +24,10 @@ const MUSCLES: MuscleSeed[] = [
   { slug: "hamstrings", name: "Ischio-jambiers", bodyPart: "lower" },
   { slug: "calves", name: "Mollets", bodyPart: "lower" },
 ];
+
+// Inclut les groupes additionnels nécessaires à l'import yuhonas
+// (abductors, adductors, neck, traps).
+const MUSCLES: MuscleSeed[] = [...CORE_MUSCLES, ...ADDITIONAL_MUSCLE_GROUPS];
 
 // ────── Exercises ──────
 type MuscleRef = { slug: string; isPrimary: boolean };

@@ -18,13 +18,21 @@ WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN corepack enable && pnpm prisma generate && pnpm build
+RUN corepack enable && pnpm prisma generate && pnpm build && \
+    # Bundle le script d'import yuhonas en JS pur pour qu'il puisse tourner
+    # dans l'image runtime sans tsx ni TypeScript. @prisma/client est externe
+    # car déjà installé dans le runtime via les copies plus bas.
+    ./node_modules/.bin/esbuild scripts/import-yuhonas.ts \
+      --bundle --platform=node --format=esm --target=node20 \
+      --external:@prisma/client \
+      --outfile=scripts/import-yuhonas.mjs
 
 # ────── 3. Runtime (standalone) ──────
 FROM node:20-alpine AS runner
 # postgresql16-client = pg_dump + psql, requis par /admin/backups pour générer
 # et restaurer les dumps directement depuis l'app.
-RUN apk add --no-cache openssl postgresql16-client
+# git = requis par scripts/import-yuhonas.ts pour cloner free-exercise-db.
+RUN apk add --no-cache openssl postgresql16-client git
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -35,6 +43,10 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
 # Dossier des sauvegardes (monté en volume via compose, partagé avec backup-cron)
 RUN mkdir -p /app/backups && chown nextjs:nodejs /app/backups
+
+# Dossier des images d'exercices (monté en volume via compose, peuplé par
+# scripts/import-yuhonas.ts puis servi par /api/exercise-images/[...path])
+RUN mkdir -p /app/exercises && chown nextjs:nodejs /app/exercises
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
@@ -48,6 +60,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+
+# Script d'import yuhonas (one-shot, exécuté manuellement par l'admin).
+# Lancer via : docker compose exec app node scripts/import-yuhonas.mjs
+# Le bundle ESM est compilé dans le builder stage via esbuild — il ne dépend
+# plus que de @prisma/client (déjà présent) et des binaires git + node natifs.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/import-yuhonas.mjs ./scripts/import-yuhonas.mjs
 
 USER nextjs
 EXPOSE 3000

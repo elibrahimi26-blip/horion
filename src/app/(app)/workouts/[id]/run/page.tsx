@@ -60,7 +60,7 @@ export default async function RunWorkoutPage({
       exercises={currentVersion.exercises.map((ex) => ({
         id: ex.id,
         exerciseId: ex.exerciseId,
-        name: ex.exercise.name,
+        name: ex.exercise.nameFr ?? ex.exercise.name,
         isCardio: ex.exercise.isCardio,
         targetSets: ex.targetSets,
         targetReps: ex.targetReps,
