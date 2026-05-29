@@ -100,7 +100,7 @@ export default async function WorkoutDetailPage({
                         href={`/library/${ex.exerciseId}`}
                         className="hover:underline"
                       >
-                        {ex.exercise.name}
+                        {ex.exercise.nameFr ?? ex.exercise.name}
                       </Link>
                       {ex.exercise.isCardio ? (
                         <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-900">
