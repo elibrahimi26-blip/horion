@@ -197,7 +197,7 @@ export function WorkoutForm({
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/[0.12] bg-black/[0.02] p-8 text-sm text-black/50 transition-colors hover:border-black/[0.2] hover:bg-black/[0.04]"
+              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-muted/30 p-8 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/50"
             >
               <span className="text-3xl">＋</span>
               Aucun exercice. Clique pour ouvrir la bibliothèque.
@@ -274,12 +274,12 @@ function ExerciseLine({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-black/[0.06] bg-white p-4",
-        "shadow-sm transition-shadow hover:shadow-md",
+        "rounded-2xl border border-border bg-card p-4",
+        "shadow-soft transition-shadow hover:shadow-lifted",
       )}
     >
       <div className="mb-3 flex items-start gap-3">
-        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
           {thumbnail ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -289,18 +289,18 @@ function ExerciseLine({
               loading="lazy"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-xl opacity-20">
+            <div className="flex h-full items-center justify-center text-xl opacity-30">
               🏋️
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium leading-tight">
-            <span className="text-black/40">{index + 1}.</span>{" "}
+            <span className="text-muted-foreground">{index + 1}.</span>{" "}
             {line.exerciseName}
           </p>
           {line.isCardio ? (
-            <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-900">
+            <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
               cardio
             </span>
           ) : null}

@@ -115,27 +115,27 @@ export function ExercisePickerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex bg-foreground/40 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
         className={cn(
           "mx-auto flex w-full max-w-5xl flex-col",
           "h-full sm:my-8 sm:h-[calc(100vh-4rem)] sm:max-h-[800px]",
-          "bg-white/90 backdrop-blur-2xl",
-          "border-0 sm:border sm:border-black/[0.06]",
-          "shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)]",
-          "sm:rounded-3xl overflow-hidden",
+          "bg-card/95 backdrop-blur-2xl",
+          "border-0 sm:border sm:border-border",
+          "shadow-floating",
+          "sm:rounded-3xl overflow-hidden animate-scale-in",
         )}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Choisir un exercice"
       >
-        <div className="flex items-center justify-between border-b border-black/[0.06] px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h3 className="text-lg font-semibold">Ajouter un exercice</h3>
-            <p className="text-xs text-black/50">
+            <p className="text-xs text-muted-foreground">
               {filtered.length} exercice{filtered.length > 1 ? "s" : ""}{" "}
               disponible{filtered.length > 1 ? "s" : ""}
             </p>
@@ -143,24 +143,24 @@ export function ExercisePickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.05] text-black/60 transition-colors hover:bg-black/[0.08]"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
             aria-label="Fermer"
           >
             ✕
           </button>
         </div>
 
-        <div className="space-y-3 border-b border-black/[0.06] bg-white/50 px-6 py-4">
+        <div className="space-y-3 border-b border-border bg-background/50 px-6 py-4">
           <Input
             placeholder="Rechercher un exercice…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="h-10 rounded-xl border-black/[0.08] bg-white"
+            className="h-10"
             autoFocus
           />
 
           <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-black/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Muscle
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -177,7 +177,7 @@ export function ExercisePickerModal({
           </div>
 
           <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-black/40">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Niveau
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -198,7 +198,7 @@ export function ExercisePickerModal({
           {filtered.length === 0 ? (
             <div className="flex h-full items-center justify-center text-center">
               <div>
-                <p className="text-sm text-black/50">
+                <p className="text-sm text-muted-foreground">
                   Aucun exercice ne correspond
                 </p>
                 <button
@@ -224,8 +224,8 @@ export function ExercisePickerModal({
           )}
         </div>
 
-        <div className="border-t border-black/[0.06] bg-white/50 px-6 py-3 text-center">
-          <p className="text-xs text-black/50">
+        <div className="border-t border-border bg-background/50 px-6 py-3 text-center">
+          <p className="text-xs text-muted-foreground">
             Clique sur un exercice pour l&apos;ajouter. Tu peux en empiler
             plusieurs d&apos;affilée.
           </p>
@@ -251,8 +251,8 @@ function FilterPill({
       className={cn(
         "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
         active
-          ? "bg-black text-white shadow-sm"
-          : "bg-black/[0.05] text-black/70 hover:bg-black/[0.08]",
+          ? "bg-primary text-primary-foreground shadow-soft"
+          : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground",
       )}
     >
       {children}
@@ -275,14 +275,14 @@ function ExerciseCard({
       onClick={onClick}
       className={cn(
         "group relative overflow-hidden text-left",
-        "rounded-2xl border border-black/[0.06] bg-white shadow-sm",
+        "rounded-2xl border border-border bg-card shadow-soft",
         "transition-all duration-200",
-        "hover:scale-[1.02] hover:border-black/[0.12] hover:shadow-md",
+        "hover:scale-[1.02] hover:border-primary/30 hover:shadow-lifted",
         "active:scale-[0.98]",
-        justAdded && "ring-2 ring-green-500 ring-offset-2",
+        justAdded && "ring-2 ring-primary ring-offset-2 ring-offset-background",
       )}
     >
-      <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="relative aspect-square overflow-hidden bg-muted">
         {exercise.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -292,18 +292,20 @@ function ExerciseCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl opacity-20">
+          <div className="flex h-full items-center justify-center text-3xl opacity-30">
             🏋️
           </div>
         )}
         {exercise.isCardio ? (
-          <div className="absolute right-2 top-2 rounded-full bg-blue-500/90 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <div className="absolute right-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-medium text-primary-foreground backdrop-blur-sm">
             cardio
           </div>
         ) : null}
         {justAdded ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-green-500/90 backdrop-blur-sm">
-            <span className="text-sm font-semibold text-white">✓ Ajouté</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-primary/90 backdrop-blur-sm">
+            <span className="text-sm font-semibold text-primary-foreground">
+              ✓ Ajouté
+            </span>
           </div>
         ) : null}
       </div>
@@ -312,7 +314,7 @@ function ExerciseCard({
           {exercise.name}
         </p>
         {exercise.primaryMuscleNames.length > 0 ? (
-          <p className="mt-1 line-clamp-1 text-xs text-black/50">
+          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
             {exercise.primaryMuscleNames.slice(0, 2).join(" • ")}
           </p>
         ) : null}

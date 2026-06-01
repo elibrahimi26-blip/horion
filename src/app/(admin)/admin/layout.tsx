@@ -1,8 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+const NAV = [
+  { href: "/admin/dashboard", label: "Dashboard" },
+  { href: "/admin/users", label: "Membres" },
+  { href: "/admin/exercises", label: "Exercices" },
+  { href: "/admin/messages", label: "Conversations" },
+  { href: "/admin/support", label: "Support" },
+  { href: "/admin/backups", label: "Sauvegardes" },
+];
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const session = await auth();
 
   if (!session?.user) {
@@ -13,41 +27,33 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-dvh">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-8">
-          <h1 className="text-lg font-bold">
+    <div className="min-h-dvh bg-background">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
+          <h1 className="text-lg font-bold tracking-tight">
             Horion <span className="text-muted-foreground">· Admin</span>
           </h1>
-          <nav className="flex flex-wrap gap-4 text-sm">
-            <Link href="/admin/dashboard" className="hover:underline">
-              Dashboard
-            </Link>
-            <Link href="/admin/users" className="hover:underline">
-              Membres
-            </Link>
-            <Link href="/admin/exercises" className="hover:underline">
-              Exercices
-            </Link>
-            <Link href="/admin/messages" className="hover:underline">
-              Conversations
-            </Link>
-            <Link href="/admin/support" className="hover:underline">
-              Support
-            </Link>
-            <Link href="/admin/backups" className="hover:underline">
-              Sauvegardes
-            </Link>
+          <nav className="flex flex-wrap items-center gap-1">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <ThemeToggle className="ml-2" />
             <Link
               href="/dashboard"
-              className="text-muted-foreground hover:underline"
+              className="ml-2 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             >
               ← Mon espace
             </Link>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-8">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-6 md:px-6">{children}</main>
     </div>
   );
 }

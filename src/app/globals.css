@@ -3,56 +3,120 @@
 @tailwind utilities;
 
 @layer base {
+  /* ────── Mode clair : crème + accent orange ────── */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 40 33% 96%;
+    --foreground: 240 6% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 240 6% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --popover-foreground: 240 6% 10%;
+
+    --primary: 17 90% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 20% 92%;
+    --secondary-foreground: 240 6% 10%;
+
+    --muted: 40 17% 90%;
+    --muted-foreground: 240 4% 42%;
+
+    --accent: 17 90% 95%;
+    --accent-foreground: 17 90% 30%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 17 90% 60%;
+
+    --radius: 1rem;
+
+    --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.04),
+      0 1px 3px -1px rgb(0 0 0 / 0.06);
+    --shadow-lifted: 0 4px 12px -2px rgb(0 0 0 / 0.08),
+      0 2px 6px -2px rgb(0 0 0 / 0.04);
+    --shadow-floating: 0 20px 60px -15px rgb(0 0 0 / 0.18);
   }
 
+  /* ────── Mode sombre : noir + orange punchy ────── */
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --background: 240 7% 6%;
+    --foreground: 30 23% 95%;
+    --card: 240 5% 11%;
+    --card-foreground: 30 23% 95%;
+    --popover: 240 5% 11%;
+    --popover-foreground: 30 23% 95%;
+
+    --primary: 17 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 30 23% 95%;
+
+    --muted: 240 5% 17%;
+    --muted-foreground: 30 8% 65%;
+
+    --accent: 17 100% 15%;
+    --accent-foreground: 17 100% 70%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 17%;
+    --input: 240 5% 17%;
+    --ring: 17 100% 60%;
+
+    --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --shadow-lifted: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+    --shadow-floating: 0 20px 60px -15px rgb(0 0 0 / 0.6);
   }
 
   * {
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+}
+
+@layer utilities {
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-lifted {
+    box-shadow: var(--shadow-lifted);
+  }
+  .shadow-floating {
+    box-shadow: var(--shadow-floating);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
