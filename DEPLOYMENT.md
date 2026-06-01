@@ -225,10 +225,11 @@ d'exercices, en complément des exercices manuellement curatés en français.
 À faire **une fois** après le premier déploiement, depuis le VPS dans `/opt/horion` :
 
 ```bash
-# Pré-requis : les migrations Prisma + le seed initial doivent être appliqués
-# (le seed crée les groupes musculaires additionnels nécessaires : abductors,
-# adductors, neck, traps). Le seed tourne automatiquement, mais en cas de doute :
-docker compose exec app node node_modules/prisma/build/index.js db seed
+# Pré-requis : le seed doit être appliqué une fois pour créer les MuscleGroup
+# (12 muscles principaux + abductors/adductors/neck/traps requis par l'import).
+# Le seed n'est PAS lancé automatiquement par le boot (seules les migrations
+# le sont) — il faut le lancer manuellement la première fois.
+docker compose exec app node prisma/seed.mjs
 
 # Import des ~870 exercices yuhonas (clone le repo dans /tmp, importe les
 # métadonnées et copie les images dans le volume exercises_data). Idempotent —

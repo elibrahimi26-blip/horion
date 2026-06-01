@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
 import {
+  ExercisePickerModal,
+  type PickerExercise,
+  type PickerMuscle,
+} from "@/components/workout/exercise-picker-modal";
+import { cn } from "@/lib/utils";
+import {
   initialWorkoutState,
   type WorkoutFormState,
 } from "@/features/workouts/state";
-
-type ExerciseOption = {
-  id: string;
-  name: string;
-  isCardio: boolean;
-};
 
 export type WorkoutExerciseLine = {
   exerciseId: string;
@@ -31,7 +31,8 @@ export type WorkoutExerciseLine = {
 };
 
 type Props = {
-  exercises: ExerciseOption[];
+  exercises: PickerExercise[];
+  muscleGroups: PickerMuscle[];
   initialValues?: {
     name: string;
     description: string;
@@ -47,6 +48,7 @@ type Props = {
 
 export function WorkoutForm({
   exercises,
+  muscleGroups,
   initialValues,
   action,
   submitLabel,
@@ -60,13 +62,12 @@ export function WorkoutForm({
     initialValues?.lines ?? [],
   );
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerSelection, setPickerSelection] = useState("");
 
-  function addExercise() {
-    const ex = exercises.find((e) => e.id === pickerSelection);
+  function handlePick(exerciseId: string) {
+    const ex = exercises.find((e) => e.id === exerciseId);
     if (!ex) return;
-    setLines([
-      ...lines,
+    setLines((prev) => [
+      ...prev,
       {
         exerciseId: ex.id,
         exerciseName: ex.name,
@@ -78,8 +79,6 @@ export function WorkoutForm({
         notes: "",
       },
     ]);
-    setPickerSelection("");
-    setPickerOpen(false);
   }
 
   function updateLine(idx: number, patch: Partial<WorkoutExerciseLine>) {
@@ -102,6 +101,10 @@ export function WorkoutForm({
     setLines(arr);
   }
 
+  const thumbnailById = new Map(
+    exercises.map((ex) => [ex.id, ex.thumbnail] as const),
+  );
+
   const serialized = lines.map((l, i) => ({
     exerciseId: l.exerciseId,
     orderIndex: i,
@@ -113,164 +116,147 @@ export function WorkoutForm({
   }));
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="exercises" value={JSON.stringify(serialized)} />
-
-      <div className="space-y-2">
-        <Label htmlFor="name">Nom de la séance *</Label>
-        <Input
-          id="name"
-          name="name"
-          required
-          defaultValue={initialValues?.name}
-          maxLength={80}
+    <>
+      <form action={formAction} className="space-y-6">
+        <input
+          type="hidden"
+          name="exercises"
+          value={JSON.stringify(serialized)}
         />
-        {state.fieldErrors?.name?.[0] ? (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.name[0]}
-          </p>
-        ) : null}
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description (optionnel)</Label>
-        <Textarea
-          id="description"
-          name="description"
-          rows={2}
-          maxLength={2000}
-          defaultValue={initialValues?.description}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Visibilité</Label>
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="visibility"
-              value="PRIVATE"
-              checked={visibility === "PRIVATE"}
-              onChange={() => setVisibility("PRIVATE")}
-              className="h-4 w-4"
-            />
-            Privée (seulement toi)
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="visibility"
-              value="PUBLIC"
-              checked={visibility === "PUBLIC"}
-              onChange={() => setVisibility("PUBLIC")}
-              className="h-4 w-4"
-            />
-            Publique (dans le flux social)
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="name">Nom de la séance *</Label>
+          <Input
+            id="name"
+            name="name"
+            required
+            defaultValue={initialValues?.name}
+            maxLength={80}
+          />
+          {state.fieldErrors?.name?.[0] ? (
+            <p className="text-xs text-destructive">
+              {state.fieldErrors.name[0]}
+            </p>
+          ) : null}
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label>Exercices *</Label>
-          {!pickerOpen ? (
+        <div className="space-y-2">
+          <Label htmlFor="description">Description (optionnel)</Label>
+          <Textarea
+            id="description"
+            name="description"
+            rows={2}
+            maxLength={2000}
+            defaultValue={initialValues?.description}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Visibilité</Label>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="visibility"
+                value="PRIVATE"
+                checked={visibility === "PRIVATE"}
+                onChange={() => setVisibility("PRIVATE")}
+                className="h-4 w-4"
+              />
+              Privée (seulement toi)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="radio"
+                name="visibility"
+                value="PUBLIC"
+                checked={visibility === "PUBLIC"}
+                onChange={() => setVisibility("PUBLIC")}
+                className="h-4 w-4"
+              />
+              Publique (dans le flux social)
+            </label>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label>Exercices *</Label>
             <Button
               type="button"
               size="sm"
               variant="outline"
               onClick={() => setPickerOpen(true)}
+              className="rounded-full"
             >
               + Ajouter
             </Button>
+          </div>
+
+          {lines.length === 0 ? (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/[0.12] bg-black/[0.02] p-8 text-sm text-black/50 transition-colors hover:border-black/[0.2] hover:bg-black/[0.04]"
+            >
+              <span className="text-3xl">＋</span>
+              Aucun exercice. Clique pour ouvrir la bibliothèque.
+            </button>
+          ) : (
+            <div className="space-y-2">
+              {lines.map((line, idx) => (
+                <ExerciseLine
+                  key={`${line.exerciseId}-${idx}`}
+                  line={line}
+                  thumbnail={thumbnailById.get(line.exerciseId) ?? null}
+                  index={idx}
+                  total={lines.length}
+                  onChange={(patch) => updateLine(idx, patch)}
+                  onRemove={() => removeLine(idx)}
+                  onMove={(dir) => moveLine(idx, dir)}
+                />
+              ))}
+            </div>
+          )}
+
+          {state.fieldErrors?.exercises?.[0] ? (
+            <p className="text-xs text-destructive">
+              {state.fieldErrors.exercises[0]}
+            </p>
           ) : null}
         </div>
 
-        {pickerOpen ? (
-          <div className="flex flex-wrap gap-2 rounded-md border bg-muted/30 p-3">
-            <select
-              value={pickerSelection}
-              onChange={(e) => setPickerSelection(e.target.value)}
-              className="flex-1 min-w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              aria-label="Choisir un exercice"
-            >
-              <option value="">— Choisir un exercice —</option>
-              {exercises.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name}
-                  {ex.isCardio ? " (cardio)" : ""}
-                </option>
-              ))}
-            </select>
-            <Button
-              type="button"
-              size="sm"
-              onClick={addExercise}
-              disabled={!pickerSelection}
-            >
-              Ajouter
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setPickerOpen(false);
-                setPickerSelection("");
-              }}
-            >
-              Annuler
-            </Button>
+        {state.status === "error" && state.error && !state.fieldErrors ? (
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {state.error}
           </div>
         ) : null}
 
-        {lines.length === 0 ? (
-          <p className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-            Aucun exercice. Clique sur « + Ajouter » pour en ajouter.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {lines.map((line, idx) => (
-              <ExerciseLine
-                key={`${line.exerciseId}-${idx}`}
-                line={line}
-                index={idx}
-                total={lines.length}
-                onChange={(patch) => updateLine(idx, patch)}
-                onRemove={() => removeLine(idx)}
-                onMove={(dir) => moveLine(idx, dir)}
-              />
-            ))}
-          </div>
-        )}
-
-        {state.fieldErrors?.exercises?.[0] ? (
-          <p className="text-xs text-destructive">
-            {state.fieldErrors.exercises[0]}
-          </p>
-        ) : null}
-      </div>
-
-      {state.status === "error" && state.error && !state.fieldErrors ? (
-        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-          {state.error}
+        <div className="flex flex-wrap gap-3">
+          <SubmitButton className="" pendingText="Enregistrement…">
+            {submitLabel}
+          </SubmitButton>
+          <Button type="button" variant="ghost" asChild>
+            <Link href="/workouts">Annuler</Link>
+          </Button>
         </div>
-      ) : null}
+      </form>
 
-      <div className="flex flex-wrap gap-3">
-        <SubmitButton className="" pendingText="Enregistrement…">
-          {submitLabel}
-        </SubmitButton>
-        <Button type="button" variant="ghost" asChild>
-          <Link href="/workouts">Annuler</Link>
-        </Button>
-      </div>
-    </form>
+      {pickerOpen ? (
+        <ExercisePickerModal
+          exercises={exercises}
+          muscleGroups={muscleGroups}
+          onClose={() => setPickerOpen(false)}
+          onPick={handlePick}
+        />
+      ) : null}
+    </>
   );
 }
 
 function ExerciseLine({
   line,
+  thumbnail,
   index,
   total,
   onChange,
@@ -278,6 +264,7 @@ function ExerciseLine({
   onMove,
 }: {
   line: WorkoutExerciseLine;
+  thumbnail: string | null;
   index: number;
   total: number;
   onChange: (patch: Partial<WorkoutExerciseLine>) => void;
@@ -285,16 +272,39 @@ function ExerciseLine({
   onMove: (dir: -1 | 1) => void;
 }) {
   return (
-    <div className="rounded-md border p-4">
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-        <p className="font-medium">
-          {index + 1}. {line.exerciseName}
+    <div
+      className={cn(
+        "rounded-2xl border border-black/[0.06] bg-white p-4",
+        "shadow-sm transition-shadow hover:shadow-md",
+      )}
+    >
+      <div className="mb-3 flex items-start gap-3">
+        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+          {thumbnail ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/exercise-images/${thumbnail}`}
+              alt=""
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xl opacity-20">
+              🏋️
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium leading-tight">
+            <span className="text-black/40">{index + 1}.</span>{" "}
+            {line.exerciseName}
+          </p>
           {line.isCardio ? (
-            <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-900">
+            <span className="mt-1 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-900">
               cardio
             </span>
           ) : null}
-        </p>
+        </div>
         <div className="flex gap-1">
           <Button
             type="button"
