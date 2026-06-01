@@ -3,8 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { WorkoutForm } from "@/components/workout/workout-form";
 import { updateWorkoutAction } from "@/features/workouts/actions";
-import { listActiveExercises } from "@/features/exercises/queries";
+import {
+  listActiveExercises,
+  listMuscleGroups,
+} from "@/features/exercises/queries";
 import { getWorkoutWithCurrentVersion } from "@/features/workouts/queries";
+import { toPickerExercises, toPickerMuscles } from "@/features/workouts/picker";
 
 export default async function EditWorkoutPage({
   params,
@@ -14,9 +18,10 @@ export default async function EditWorkoutPage({
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [workout, exercises] = await Promise.all([
+  const [workout, exercises, muscleGroups] = await Promise.all([
     getWorkoutWithCurrentVersion(params.id, session.user.id),
     listActiveExercises(),
+    listMuscleGroups(),
   ]);
 
   if (!workout || workout.authorId !== session.user.id) notFound();
@@ -34,12 +39,6 @@ export default async function EditWorkoutPage({
       e.targetWeightKg !== null ? String(e.targetWeightKg) : "",
     restSeconds: e.restSeconds !== null ? String(e.restSeconds) : "",
     notes: e.notes ?? "",
-  }));
-
-  const options = exercises.map((ex) => ({
-    id: ex.id,
-    name: ex.nameFr ?? ex.name,
-    isCardio: ex.isCardio,
   }));
 
   const boundAction = updateWorkoutAction.bind(null, workout.id);
@@ -62,7 +61,8 @@ export default async function EditWorkoutPage({
       </div>
 
       <WorkoutForm
-        exercises={options}
+        exercises={toPickerExercises(exercises)}
+        muscleGroups={toPickerMuscles(muscleGroups, exercises)}
         initialValues={{
           name: workout.name,
           description: workout.description ?? "",
