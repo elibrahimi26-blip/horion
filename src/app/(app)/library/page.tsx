@@ -30,7 +30,11 @@ export default async function LibraryPage({
     );
   }
   if (search) {
-    filtered = filtered.filter((ex) => ex.name.toLowerCase().includes(search));
+    filtered = filtered.filter(
+      (ex) =>
+        ex.name.toLowerCase().includes(search) ||
+        (ex.nameFr?.toLowerCase().includes(search) ?? false),
+    );
   }
 
   return (

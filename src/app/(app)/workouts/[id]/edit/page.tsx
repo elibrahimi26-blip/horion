@@ -26,7 +26,7 @@ export default async function EditWorkoutPage({
 
   const lines = currentVersion.exercises.map((e) => ({
     exerciseId: e.exerciseId,
-    exerciseName: e.exercise.name,
+    exerciseName: e.exercise.nameFr ?? e.exercise.name,
     isCardio: e.exercise.isCardio,
     targetSets: e.targetSets,
     targetReps: e.targetReps ?? "",
@@ -38,7 +38,7 @@ export default async function EditWorkoutPage({
 
   const options = exercises.map((ex) => ({
     id: ex.id,
-    name: ex.name,
+    name: ex.nameFr ?? ex.name,
     isCardio: ex.isCardio,
   }));
 

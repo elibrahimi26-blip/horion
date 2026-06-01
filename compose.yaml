@@ -30,6 +30,7 @@ services:
       - "3000"
     volumes:
       - backups_data:/app/backups
+      - exercises_data:/app/exercises
 
   backup-cron:
     build:
@@ -73,3 +74,4 @@ volumes:
   caddy_data:
   caddy_config:
   backups_data:
+  exercises_data:

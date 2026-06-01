@@ -142,3 +142,33 @@ export async function restoreExerciseAction(exerciseId: string) {
   revalidatePath("/admin/exercises");
   revalidatePath("/library");
 }
+
+export async function setExerciseVisibilityAction(
+  exerciseId: string,
+  isVisible: boolean,
+) {
+  await requireAdmin();
+  await db.exercise.update({
+    where: { id: exerciseId },
+    data: { isVisible },
+  });
+  revalidatePath("/admin/exercises");
+  revalidatePath("/library");
+}
+
+export async function setExerciseNameFrAction(
+  exerciseId: string,
+  _prev: unknown,
+  formData: FormData,
+) {
+  await requireAdmin();
+  const raw = formData.get("nameFr");
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  await db.exercise.update({
+    where: { id: exerciseId },
+    data: { nameFr: trimmed.length > 0 ? trimmed : null },
+  });
+  revalidatePath("/admin/exercises");
+  revalidatePath("/library");
+  return { status: "success" as const };
+}

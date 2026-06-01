@@ -11,7 +11,7 @@ export default async function NewWorkoutPage() {
   const exercises = await listActiveExercises();
   const options = exercises.map((ex) => ({
     id: ex.id,
-    name: ex.name,
+    name: ex.nameFr ?? ex.name,
     isCardio: ex.isCardio,
   }));
 

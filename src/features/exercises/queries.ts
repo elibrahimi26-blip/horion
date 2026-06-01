@@ -13,10 +13,12 @@ export async function listExercisesForAdmin() {
   });
 }
 
+// Liste membres : seuls les exos non archivés ET marqués visibles par l'admin.
+// Les imports yuhonas restent cachés tant que l'admin n'a pas activé `isVisible`.
 export async function listActiveExercises() {
   return db.exercise.findMany({
-    where: { archivedAt: null },
-    orderBy: { name: "asc" },
+    where: { archivedAt: null, isVisible: true },
+    orderBy: [{ nameFr: "asc" }, { name: "asc" }],
     include: exerciseInclude,
   });
 }

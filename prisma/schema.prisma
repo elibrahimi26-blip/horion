@@ -73,7 +73,7 @@ model User {
   lastLoginAt          DateTime?
 
   sessions               AuthSession[]
-  workouts               Workout[]        @relation("WorkoutAuthor")
+  workouts               Workout[]         @relation("WorkoutAuthor")
   workoutLikes           WorkoutLike[]
   workoutSaves           WorkoutSave[]
   workoutCategories      WorkoutCategory[]
@@ -124,12 +124,24 @@ model MuscleGroup {
 model Exercise {
   id               String    @id @default(cuid())
   name             String
+  nameFr           String? // traduction française (éditable par l'admin)
   description      String?   @db.Text
-  mediaUrl         String? // GIF / image hébergé sur R2
+  mediaUrl         String? // hero image (Flux ou upload admin)
   estimatedSeconds Int?
   isCardio         Boolean   @default(false)
+  isVisible        Boolean   @default(true) // visible côté membres (false par défaut pour les imports yuhonas)
   archivedAt       DateTime? // soft delete pour préserver versions
   createdAt        DateTime  @default(now())
+
+  // ────── Métadonnées yuhonas (import) ──────
+  externalId   String?  @unique // identifiant yuhonas, ex: "Barbell_Bench_Press"
+  equipment    String? // barbell, dumbbell, body only, machine, cable…
+  level        String? // beginner, intermediate, expert
+  force        String? // push, pull, static
+  mechanic     String? // compound, isolation
+  category     String? // strength, cardio, stretching, plyometrics…
+  instructions String[] @default([]) // étapes textuelles
+  imagePaths   String[] @default([]) // ex: ["Barbell_Bench_Press/0.jpg", "Barbell_Bench_Press/1.jpg"]
 
   muscles                 ExerciseMuscle[]
   workoutVersionExercises WorkoutVersionExercise[]
@@ -137,6 +149,7 @@ model Exercise {
 
   @@index([name])
   @@index([archivedAt])
+  @@index([isVisible])
 }
 
 model ExerciseMuscle {

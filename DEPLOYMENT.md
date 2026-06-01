@@ -210,6 +210,59 @@ s'exécute automatiquement. Tu peux suivre dans l'onglet **Actions** du repo.
 | Console Prisma (Studio) | Pas utilisable en prod, faire un dump + Studio en local |
 | Console psql | `docker compose exec db psql -U horion -d horion` |
 | Voir la conso CPU/RAM | `docker stats` |
+| Importer la bibliothèque d'exercices (yuhonas) | `docker compose exec app node scripts/import-yuhonas.mjs` |
+
+---
+
+## Bibliothèque d'exercices
+
+Horion utilise [yuhonas/free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+(licence MIT, ~870 exercices avec 2 images statiques par exercice) comme base
+d'exercices, en complément des exercices manuellement curatés en français.
+
+### Premier import
+
+À faire **une fois** après le premier déploiement, depuis le VPS dans `/opt/horion` :
+
+```bash
+# Pré-requis : les migrations Prisma + le seed initial doivent être appliqués
+# (le seed crée les groupes musculaires additionnels nécessaires : abductors,
+# adductors, neck, traps). Le seed tourne automatiquement, mais en cas de doute :
+docker compose exec app node node_modules/prisma/build/index.js db seed
+
+# Import des ~870 exercices yuhonas (clone le repo dans /tmp, importe les
+# métadonnées et copie les images dans le volume exercises_data). Idempotent —
+# rejouable sans dupliquer.
+docker compose exec app node scripts/import-yuhonas.mjs
+```
+
+Durée : ~2-3 min (clone du repo + copie de ~1700 images JPG).
+
+### Workflow admin
+
+Les exercices importés arrivent en base avec `isVisible = false` — ils ne sont
+**pas affichés** côté membres tant que tu ne les actives pas.
+
+Dans l'admin `/admin/exercises` :
+- Section **« En attente d'approbation »** : les imports yuhonas. Tu peux y
+  ajouter un nom français via le champ inline, puis cliquer **« Activer »**
+  pour rendre l'exercice visible.
+- Section **« Visibles »** : les exercices curatés (seed initial) + les imports
+  approuvés. C'est ce que voient les membres dans `/library`.
+- Section **« Archivés »** : soft-deleted, conservés pour les versions de
+  séances historiques.
+
+### Mise à jour des données yuhonas
+
+Le script est idempotent. Pour récupérer les ajouts/corrections upstream :
+
+```bash
+docker compose exec app node scripts/import-yuhonas.mjs
+```
+
+Les exercices existants (identifiés par `externalId`) sont mis à jour
+**sans toucher** à `isVisible`, `nameFr`, ni `mediaUrl` — tes choix admin
+sont préservés. Les nouveaux exercices yuhonas sont ajoutés en `isVisible = false`.
 
 ---
 
