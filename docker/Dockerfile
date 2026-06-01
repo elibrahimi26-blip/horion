@@ -25,7 +25,14 @@ RUN corepack enable && pnpm prisma generate && pnpm build && \
     ./node_modules/.bin/esbuild scripts/import-yuhonas.ts \
       --bundle --platform=node --format=esm --target=node20 \
       --external:@prisma/client \
-      --outfile=scripts/import-yuhonas.mjs
+      --outfile=scripts/import-yuhonas.mjs && \
+    # Idem pour le seed Prisma : sans ce bundle, `prisma db seed` échoue en
+    # prod avec "spawn tsx ENOENT" puisque tsx n'est pas dans l'image runner.
+    # Lancement prod : docker compose exec app node prisma/seed.mjs
+    ./node_modules/.bin/esbuild prisma/seed.ts \
+      --bundle --platform=node --format=esm --target=node20 \
+      --external:@prisma/client \
+      --outfile=prisma/seed.mjs
 
 # ────── 3. Runtime (standalone) ──────
 FROM node:20-alpine AS runner
