@@ -14,7 +14,6 @@ import {
   Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { NotificationsBell } from "@/components/layout/notifications-bell";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -77,7 +76,13 @@ const NAV: NavLink[] = [
   },
 ];
 
-export function TopBar({ isAdmin }: { isAdmin: boolean }) {
+export function TopBar({
+  isAdmin,
+  notifications,
+}: {
+  isAdmin: boolean;
+  notifications?: React.ReactNode;
+}) {
   const pathname = usePathname() ?? "";
 
   return (
@@ -124,7 +129,7 @@ export function TopBar({ isAdmin }: { isAdmin: boolean }) {
             </Link>
           ) : null}
           <ThemeToggle className="hidden sm:inline-flex" />
-          <NotificationsBell />
+          {notifications}
           <div className="hidden md:block">
             <LogoutButton />
           </div>
