@@ -20,7 +20,7 @@ export function ResetSessionsButton({ count }: { count: number }) {
         <p>
           Cette action supprime <strong>{count} séance(s)</strong> et toutes
           leurs séries enregistrées. Les séances planifiées seront re-marquées
-          comme "à faire". Cette action est irréversible.
+          comme à faire. Cette action est irréversible.
         </p>
         <p className="text-xs text-muted-foreground">
           Tape <code className="font-mono">RESET</code> pour confirmer.
