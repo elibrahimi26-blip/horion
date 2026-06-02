@@ -80,6 +80,33 @@ export default async function ProfilePage() {
         </Link>
       ) : null}
 
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href="/profile/weight"
+          className="flex items-center justify-between rounded-md border p-4 transition-colors hover:bg-muted"
+        >
+          <div>
+            <p className="text-sm font-semibold">Suivi du poids</p>
+            <p className="text-xs text-muted-foreground">
+              Ajouter, modifier, supprimer
+            </p>
+          </div>
+          <span>→</span>
+        </Link>
+        <Link
+          href="/profile/sessions"
+          className="flex items-center justify-between rounded-md border p-4 transition-colors hover:bg-muted"
+        >
+          <div>
+            <p className="text-sm font-semibold">Mes séances</p>
+            <p className="text-xs text-muted-foreground">
+              Historique et gestion
+            </p>
+          </div>
+          <span>→</span>
+        </Link>
+      </div>
+
       <div className="rounded-md border p-6">
         <XpProgress totalXp={totalXp} />
       </div>
