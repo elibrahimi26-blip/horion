@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Shield } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,53 @@ export default async function ProfilePage() {
             Membre depuis {dateFmt.format(user.createdAt)}
           </p>
         </div>
+      </div>
+
+      {session.user.role === "ADMIN" ? (
+        <Link
+          href="/admin/dashboard"
+          className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Shield className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Panel administrateur</p>
+              <p className="text-xs text-muted-foreground">
+                Gestion des membres, contenu et modération
+              </p>
+            </div>
+          </div>
+          <span className="text-primary">→</span>
+        </Link>
+      ) : null}
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href="/profile/weight"
+          className="flex items-center justify-between rounded-md border p-4 transition-colors hover:bg-muted"
+        >
+          <div>
+            <p className="text-sm font-semibold">Suivi du poids</p>
+            <p className="text-xs text-muted-foreground">
+              Ajouter, modifier, supprimer
+            </p>
+          </div>
+          <span>→</span>
+        </Link>
+        <Link
+          href="/profile/sessions"
+          className="flex items-center justify-between rounded-md border p-4 transition-colors hover:bg-muted"
+        >
+          <div>
+            <p className="text-sm font-semibold">Mes séances</p>
+            <p className="text-xs text-muted-foreground">
+              Historique et gestion
+            </p>
+          </div>
+          <span>→</span>
+        </Link>
       </div>
 
       <div className="rounded-md border p-6">

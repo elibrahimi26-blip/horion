@@ -122,3 +122,85 @@ export async function cancelSessionAction(sessionId: string) {
 
   revalidatePath(`/workouts/${ws.workoutId}`);
 }
+
+export async function updateSessionDateAction(formData: FormData) {
+  const session = await requireUser();
+
+  const sessionId = formData.get("sessionId");
+  const raw = formData.get("startedAt");
+  if (typeof sessionId !== "string" || typeof raw !== "string") {
+    throw new Error("Champs manquants");
+  }
+  const startedAt = new Date(raw);
+  if (Number.isNaN(startedAt.getTime())) {
+    throw new Error("Date invalide");
+  }
+  if (startedAt.getTime() > Date.now() + 60_000) {
+    throw new Error("La date ne peut pas être dans le futur");
+  }
+
+  const ws = await db.workoutSession.findFirst({
+    where: { id: sessionId, userId: session.user.id },
+    select: { id: true, endedAt: true, workoutId: true },
+  });
+  if (!ws) throw new Error("Session introuvable");
+
+  // Recalcule durationSec si la session est terminée
+  let durationSec: number | undefined;
+  if (ws.endedAt) {
+    durationSec = Math.max(
+      0,
+      Math.floor((ws.endedAt.getTime() - startedAt.getTime()) / 1000),
+    );
+  }
+
+  await db.workoutSession.update({
+    where: { id: ws.id },
+    data: { startedAt, ...(durationSec !== undefined ? { durationSec } : {}) },
+  });
+
+  revalidatePath("/profile/sessions");
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+  revalidatePath(`/workouts/${ws.workoutId}`);
+}
+
+export async function deleteSessionAction(sessionId: string) {
+  const session = await requireUser();
+
+  const ws = await db.workoutSession.findFirst({
+    where: { id: sessionId, userId: session.user.id },
+    select: { id: true, workoutId: true },
+  });
+  if (!ws) return;
+
+  await db.$transaction([
+    db.plannedSession.updateMany({
+      where: { sessionId: ws.id },
+      data: { sessionId: null, status: "SCHEDULED" },
+    }),
+    db.workoutSession.delete({ where: { id: ws.id } }),
+  ]);
+
+  revalidatePath("/profile/sessions");
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+  revalidatePath(`/workouts/${ws.workoutId}`);
+}
+
+export async function resetAllSessionsAction() {
+  const session = await requireUser();
+
+  await db.$transaction([
+    db.plannedSession.updateMany({
+      where: { userId: session.user.id, sessionId: { not: null } },
+      data: { sessionId: null, status: "SCHEDULED" },
+    }),
+    db.workoutSession.deleteMany({ where: { userId: session.user.id } }),
+  ]);
+
+  revalidatePath("/profile/sessions");
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+  revalidatePath("/dashboard");
+}

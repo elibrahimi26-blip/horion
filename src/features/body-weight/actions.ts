@@ -14,6 +14,12 @@ async function requireUser() {
   return session;
 }
 
+function parseRecordedAt(raw: FormDataEntryValue | null): Date | undefined {
+  if (typeof raw !== "string" || raw === "") return undefined;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
 export async function logBodyWeightAction(
   _prev: BodyWeightFormState,
   formData: FormData,
@@ -22,8 +28,9 @@ export async function logBodyWeightAction(
 
   const rawWeight = formData.get("weightKg");
   const weight = typeof rawWeight === "string" ? Number(rawWeight) : NaN;
+  const recordedAt = parseRecordedAt(formData.get("recordedAt"));
 
-  const parsed = bodyWeightSchema.safeParse({ weightKg: weight });
+  const parsed = bodyWeightSchema.safeParse({ weightKg: weight, recordedAt });
   if (!parsed.success) {
     return {
       status: "error",
@@ -35,10 +42,52 @@ export async function logBodyWeightAction(
     data: {
       userId: session.user.id,
       weightKg: parsed.data.weightKg,
+      ...(parsed.data.recordedAt ? { recordedAt: parsed.data.recordedAt } : {}),
     },
   });
 
   revalidatePath("/dashboard");
+  revalidatePath("/profile/weight");
+  return { status: "success" };
+}
+
+export async function editBodyWeightEntryAction(
+  _prev: BodyWeightFormState,
+  formData: FormData,
+): Promise<BodyWeightFormState> {
+  const session = await requireUser();
+
+  const entryId = formData.get("entryId");
+  if (typeof entryId !== "string" || entryId === "") {
+    return { status: "error", error: "Entrée introuvable." };
+  }
+
+  const rawWeight = formData.get("weightKg");
+  const weight = typeof rawWeight === "string" ? Number(rawWeight) : NaN;
+  const recordedAt = parseRecordedAt(formData.get("recordedAt"));
+
+  const parsed = bodyWeightSchema.safeParse({ weightKg: weight, recordedAt });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      error: parsed.error.issues[0]?.message ?? "Poids invalide",
+    };
+  }
+
+  const result = await db.bodyWeightEntry.updateMany({
+    where: { id: entryId, userId: session.user.id },
+    data: {
+      weightKg: parsed.data.weightKg,
+      ...(parsed.data.recordedAt ? { recordedAt: parsed.data.recordedAt } : {}),
+    },
+  });
+
+  if (result.count === 0) {
+    return { status: "error", error: "Entrée introuvable." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/profile/weight");
   return { status: "success" };
 }
 
@@ -48,4 +97,5 @@ export async function deleteBodyWeightEntryAction(entryId: string) {
     where: { id: entryId, userId: session.user.id },
   });
   revalidatePath("/dashboard");
+  revalidatePath("/profile/weight");
 }
