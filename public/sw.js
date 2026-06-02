@@ -6,7 +6,10 @@
 // La synchronisation des séances hors-ligne est gérée côté React via
 // IndexedDB (voir useOfflineQueue) — pas par ce SW.
 
-const CACHE_VERSION = "horion-v1";
+// Bump à chaque release qui change le CSS/JS shippé pour purger les caches
+// clients (sinon les utilisateurs gardent l'ancienne UI tant qu'ils ne
+// vident pas leur cache manuellement).
+const CACHE_VERSION = "horion-v2-design";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 
