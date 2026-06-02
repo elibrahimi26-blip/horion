@@ -52,6 +52,7 @@ enum NotificationType {
   WORKOUT_LIKED
   WORKOUT_SAVED
   LEVEL_UP
+  XP_GAINED
   ADMIN_BROADCAST
 }
 

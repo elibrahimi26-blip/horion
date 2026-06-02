@@ -1,8 +1,14 @@
 import type { XpEventType } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createNotification } from "@/features/notifications/service";
-import { isOneShot, XP_AMOUNTS } from "./events";
+import { isOneShot, XP_AMOUNTS, XP_LABELS } from "./events";
 import { getLevelFromXp } from "./levels";
+
+// Types d'XP pour lesquels une notif est DÉJÀ créée en amont par l'action
+// (évite le doublon). LIKE_RECEIVED a déjà WORKOUT_LIKED côté social/actions.
+const SKIP_XP_NOTIFICATION: ReadonlySet<XpEventType> = new Set([
+  "LIKE_RECEIVED",
+]);
 
 export type AwardResult = {
   awarded: boolean;
@@ -57,6 +63,16 @@ export async function awardXp(
   const newXp = previousXp + amount;
   const newLevel = getLevelFromXp(newXp);
   const leveledUp = newLevel > previousLevel;
+
+  if (!SKIP_XP_NOTIFICATION.has(type)) {
+    await createNotification({
+      userId,
+      type: "XP_GAINED",
+      title: `+${amount} XP`,
+      body: XP_LABELS[type],
+      url: "/profile",
+    });
+  }
 
   if (leveledUp) {
     await createNotification({
