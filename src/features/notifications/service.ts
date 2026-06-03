@@ -1,5 +1,6 @@
 import type { NotificationType } from "@prisma/client";
 import { db } from "@/lib/db";
+import { sendPushToUser } from "@/features/push/service";
 
 export type CreateNotificationParams = {
   userId: string;
@@ -10,7 +11,7 @@ export type CreateNotificationParams = {
 };
 
 export async function createNotification(params: CreateNotificationParams) {
-  return db.notification.create({
+  const notification = await db.notification.create({
     data: {
       userId: params.userId,
       type: params.type,
@@ -19,4 +20,14 @@ export async function createNotification(params: CreateNotificationParams) {
       url: params.url ?? null,
     },
   });
+
+  // Push web : best-effort, ne bloque pas si la sub est expirée.
+  void sendPushToUser(params.userId, {
+    title: params.title,
+    body: params.body,
+    url: params.url,
+    tag: params.type,
+  });
+
+  return notification;
 }

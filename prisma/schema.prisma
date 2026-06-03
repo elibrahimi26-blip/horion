@@ -88,6 +88,7 @@ model User {
   privateThreadsAsAdmin  PrivateThread[]   @relation("AdminThreads")
   privateMessages        PrivateMessage[]  @relation("PrivateSender")
   notifications          Notification[]
+  pushSubscriptions      PushSubscription[]
 
   @@index([status])
   @@index([role])
@@ -423,4 +424,19 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt])
+}
+
+// ────── PUSH SUBSCRIPTIONS ──────
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
