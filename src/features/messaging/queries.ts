@@ -21,25 +21,24 @@ export async function listMyThreads(userId: string) {
         take: 1,
         select: { body: true, senderId: true, createdAt: true },
       },
+      // _count filtré (Prisma 5+) : remplace l'ex-boucle Promise.all qui
+      // faisait N+1 (1 query liste + 1 count par thread).
+      _count: {
+        select: {
+          messages: {
+            where: {
+              senderId: { not: userId },
+              readAt: null,
+            },
+          },
+        },
+      },
     },
   });
 
-  // Compte les messages non lus pour chaque thread (envoyés par l'autre).
-  const unreadCounts = await Promise.all(
-    threads.map((t) =>
-      db.privateMessage.count({
-        where: {
-          threadId: t.id,
-          senderId: { not: userId },
-          readAt: null,
-        },
-      }),
-    ),
-  );
-
-  return threads.map((t, i) => ({
+  return threads.map((t) => ({
     ...t,
-    unreadCount: unreadCounts[i] ?? 0,
+    unreadCount: t._count.messages,
   }));
 }
 
