@@ -9,6 +9,7 @@ import { XpProgress } from "@/components/shared/xp-progress";
 import { PushNotificationsCard } from "@/components/profile/push-notifications-card";
 import { listXpEvents, sumUserXp } from "@/features/xp/service";
 import { XP_LABELS } from "@/features/xp/events";
+import { getFollowCounts } from "@/features/follows/queries";
 import { formatDateMonthYear } from "@/lib/format";
 
 const dateTimeFmt = new Intl.DateTimeFormat("fr-FR", {
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const [user, totalXp, xpEvents] = await Promise.all([
+  const [user, totalXp, xpEvents, followCounts] = await Promise.all([
     db.user.findUniqueOrThrow({
       where: { id: session.user.id },
       select: {
@@ -35,6 +36,7 @@ export default async function ProfilePage() {
     }),
     sumUserXp(session.user.id),
     listXpEvents(session.user.id, 20),
+    getFollowCounts(session.user.id),
   ]);
 
   return (
@@ -46,13 +48,43 @@ export default async function ProfilePage() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4 rounded-md border p-6">
-        <LevelBadge totalXp={totalXp} size="lg" />
-        <div className="flex-1 space-y-1">
-          <p className="text-lg font-semibold">{user.username}</p>
-          <p className="text-xs text-muted-foreground">
-            Membre depuis {formatDateMonthYear(user.createdAt)}
-          </p>
+      <div className="space-y-4 rounded-md border p-6">
+        <div className="flex flex-wrap items-center gap-4">
+          <LevelBadge totalXp={totalXp} size="lg" />
+          <div className="flex-1 space-y-1">
+            <p className="text-lg font-semibold">{user.username}</p>
+            <p className="text-xs text-muted-foreground">
+              Membre depuis {formatDateMonthYear(user.createdAt)}
+            </p>
+          </div>
+          <Button asChild size="sm" variant="ghost">
+            <Link href={`/u/${user.username}`}>Voir profil public</Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 border-t pt-4 text-center">
+          <Link
+            href={`/u/${user.username}/followers`}
+            className="rounded-md p-2 transition-colors hover:bg-accent"
+          >
+            <p className="text-lg font-bold tabular-nums">
+              {followCounts.followersCount}
+            </p>
+            <p className="text-[10px] uppercase text-muted-foreground">
+              follower{followCounts.followersCount > 1 ? "s" : ""}
+            </p>
+          </Link>
+          <Link
+            href={`/u/${user.username}/following`}
+            className="rounded-md p-2 transition-colors hover:bg-accent"
+          >
+            <p className="text-lg font-bold tabular-nums">
+              {followCounts.followingCount}
+            </p>
+            <p className="text-[10px] uppercase text-muted-foreground">
+              abonnement{followCounts.followingCount > 1 ? "s" : ""}
+            </p>
+          </Link>
         </div>
       </div>
 
