@@ -99,3 +99,14 @@ export async function deleteBodyWeightEntryAction(entryId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/profile/weight");
 }
+
+// Hard delete de TOUTES les mesures de poids de l'utilisateur.
+// Action irréversible — la confirmation par re-saisie "RESET" est côté client.
+export async function resetAllBodyWeightsAction() {
+  const session = await requireUser();
+  await db.bodyWeightEntry.deleteMany({
+    where: { userId: session.user.id },
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/profile/weight");
+}

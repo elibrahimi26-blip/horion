@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { WeightInput } from "@/components/dashboard/weight-input";
 import { WeightHistoryRow } from "@/components/dashboard/weight-history-row";
+import { ResetWeightsButton } from "@/components/profile/reset-weights-button";
 
 export default async function WeightHistoryPage() {
   const session = await auth();
@@ -56,6 +57,8 @@ export default async function WeightHistoryPage() {
           </div>
         )}
       </div>
+
+      <ResetWeightsButton count={entries.length} />
     </div>
   );
 }

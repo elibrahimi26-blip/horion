@@ -65,6 +65,29 @@ export async function getThread(threadId: string, userId: string) {
   });
 }
 
+// Recherche d'utilisateurs ACTIVE par username (insensible à la casse).
+// Exclut l'utilisateur courant. Utilisé par /messages/new pour démarrer
+// une conversation sans passer par une séance publique.
+export async function searchUsers(
+  query: string,
+  currentUserId: string,
+  limit = 20,
+) {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  return db.user.findMany({
+    where: {
+      status: "ACTIVE",
+      id: { not: currentUserId },
+      username: { contains: q, mode: "insensitive" },
+    },
+    select: { id: true, username: true, avatarUrl: true, role: true },
+    orderBy: { username: "asc" },
+    take: limit,
+  });
+}
+
 // Liste tous les membres actifs avec leur thread existant avec l'admin courant.
 // Utilisé par le panel admin pour démarrer une conversation rapidement.
 export async function listMembersForAdmin(adminId: string) {
