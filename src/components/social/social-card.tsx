@@ -51,7 +51,7 @@ export function SocialCard({
           <p className="text-xs text-muted-foreground">
             par{" "}
             <Link
-              href={`/workouts/${workout.id}`}
+              href={`/u/${workout.author.username}`}
               className="hover:underline"
             >
               {workout.author.username}

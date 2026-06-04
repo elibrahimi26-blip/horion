@@ -54,6 +54,7 @@ enum NotificationType {
   LEVEL_UP
   XP_GAINED
   ADMIN_BROADCAST
+  NEW_FOLLOWER
 }
 
 // ────── USER & AUTH ──────
@@ -89,11 +90,28 @@ model User {
   privateMessages        PrivateMessage[]  @relation("PrivateSender")
   notifications          Notification[]
   pushSubscriptions      PushSubscription[]
+  following              Follow[]          @relation("Following")
+  followers              Follow[]          @relation("Followers")
 
   @@index([status])
   @@index([role])
   @@index([createdAt])
   @@index([lastLoginAt])
+}
+
+// ────── FOLLOWS (asymétrique, Twitter-like) ──────
+// follower suit following. Pas de demande d'amitié, pas de relation mutuelle.
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+  @@index([followerId])
 }
 
 model AuthSession {
