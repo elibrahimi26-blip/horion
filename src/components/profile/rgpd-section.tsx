@@ -22,7 +22,8 @@ function DeleteButton({ disabled }: { disabled: boolean }) {
 
 export function RgpdSection({ username }: { username: string }) {
   const [confirmation, setConfirmation] = useState("");
-  const canDelete = confirmation === username;
+  const [password, setPassword] = useState("");
+  const canDelete = confirmation === username && password.length > 0;
 
   return (
     <div className="space-y-6">
@@ -68,8 +69,21 @@ export function RgpdSection({ username }: { username: string }) {
               autoComplete="off"
             />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="deletePassword" className="text-xs">
+              Mot de passe actuel
+            </Label>
+            <Input
+              id="deletePassword"
+              name="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
           <DeleteButton disabled={!canDelete} />
-          {!canDelete && confirmation.length > 0 ? (
+          {confirmation.length > 0 && confirmation !== username ? (
             <p className="text-xs text-muted-foreground">
               La confirmation ne correspond pas à ton pseudo.
             </p>
