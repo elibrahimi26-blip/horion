@@ -1,17 +1,24 @@
 import webpush from "web-push";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
+
+// Pas d'import @/lib/env volontairement : ça forcerait la validation Zod
+// des env vars requises au moment du build Docker (où elles ne sont pas
+// passées au stage "builder"). Cf. fix du Dockerfile post-PR #9.
+// Les VAPID keys étant entièrement optionnelles, on les lit directement
+// depuis process.env au runtime.
 
 let vapidConfigured = false;
 
 function configureVapid() {
   if (vapidConfigured) return true;
-  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return false;
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return false;
 
   webpush.setVapidDetails(
-    env.VAPID_SUBJECT ?? "mailto:contact@horion.app",
-    env.VAPID_PUBLIC_KEY,
-    env.VAPID_PRIVATE_KEY,
+    process.env.VAPID_SUBJECT ?? "mailto:contact@horion.app",
+    publicKey,
+    privateKey,
   );
   vapidConfigured = true;
   return true;
@@ -66,5 +73,5 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
 }
 
 export function getVapidPublicKey() {
-  return env.VAPID_PUBLIC_KEY ?? null;
+  return process.env.VAPID_PUBLIC_KEY ?? null;
 }
