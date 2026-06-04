@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SubmitButton } from "@/components/auth/submit-button";
+import { ExerciseImageUploader } from "@/components/admin/exercise-image-uploader";
 import {
   type ExerciseFormState,
   initialExerciseState,
@@ -22,6 +23,7 @@ type ExerciseEditValue = {
   description: string | null;
   isCardio: boolean;
   estimatedSeconds: number | null;
+  imagePath: string | null;
   muscles: { muscleGroupId: string; isPrimary: boolean }[];
 };
 
@@ -79,6 +81,14 @@ export function ExerciseForm({
           maxLength={2000}
           defaultValue={exercise?.description ?? ""}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Image / animation (optionnel)</Label>
+        <p className="text-xs text-muted-foreground">
+          Image affichée sur la fiche exercice. Les GIFs animés sont supportés.
+        </p>
+        <ExerciseImageUploader initialPath={exercise?.imagePath ?? null} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

@@ -10,17 +10,18 @@ export const dynamic = "force-dynamic";
 const EXERCISES_DIR = process.env.EXERCISES_DIR ?? "/app/exercises";
 
 // Format attendu : <externalId>/<index>.<ext>
-// - externalId : a-z, A-Z, 0-9, _, -, . (slugs yuhonas)
+// - externalId : a-z, A-Z, 0-9, _, -, . (slugs yuhonas ou "upload-<hex>")
 // - index      : un ou plusieurs chiffres
-// - ext        : jpg, jpeg, png, webp
+// - ext        : jpg, jpeg, png, webp, gif
 const SEGMENT_RE = /^[A-Za-z0-9_.-]+$/;
-const FILENAME_RE = /^[0-9]+\.(jpg|jpeg|png|webp)$/i;
+const FILENAME_RE = /^[0-9]+\.(jpg|jpeg|png|webp|gif)$/i;
 
 const CONTENT_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
   ".webp": "image/webp",
+  ".gif": "image/gif",
 };
 
 export async function GET(
