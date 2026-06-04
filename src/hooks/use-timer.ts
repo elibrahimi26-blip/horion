@@ -51,12 +51,5 @@ export function useRestTimer() {
   return { remaining, running, start, stop };
 }
 
-export function formatDuration(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  }
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+// Ré-export pour ne pas casser les imports existants ; canonique = lib/format.
+export { formatDurationHMS as formatDuration } from "@/lib/format";

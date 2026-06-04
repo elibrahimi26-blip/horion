@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { formatDurationLabel, toLocalInput } from "@/lib/format";
 import {
   updateSessionDateAction,
   deleteSessionAction,
@@ -17,20 +18,6 @@ const fmt = new Intl.DateTimeFormat("fr-FR", {
   hour: "2-digit",
   minute: "2-digit",
 });
-
-function toLocalInput(d: Date) {
-  const offset = d.getTimezoneOffset();
-  const local = new Date(d.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-function formatDuration(sec: number | null) {
-  if (sec === null) return "—";
-  const m = Math.floor(sec / 60);
-  const h = Math.floor(m / 60);
-  if (h > 0) return `${h}h${String(m % 60).padStart(2, "0")}`;
-  return `${m} min`;
-}
 
 export function SessionHistoryRow({
   session,
@@ -67,7 +54,7 @@ export function SessionHistoryRow({
             id={`s-${session.id}`}
             name="startedAt"
             type="datetime-local"
-            defaultValue={toLocalInput(new Date(session.startedAt))}
+            defaultValue={toLocalInput(session.startedAt)}
             max={new Date().toISOString().slice(0, 16)}
             required
           />
@@ -95,7 +82,7 @@ export function SessionHistoryRow({
         <p className="truncate font-semibold">{session.workoutName}</p>
         <p className="text-xs text-muted-foreground">
           {fmt.format(new Date(session.startedAt))} ·{" "}
-          {formatDuration(session.durationSec)} · {session.setsCount} séries
+          {formatDurationLabel(session.durationSec)} · {session.setsCount} séries
           {session.endedAt === null ? " · en cours" : ""}
         </p>
       </div>
