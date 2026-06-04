@@ -21,7 +21,7 @@ export default async function AdminConversationPage({
       senderId: { not: session.user.id },
       readAt: null,
       thread: {
-        OR: [{ memberId: session.user.id }, { adminId: session.user.id }],
+        OR: [{ userAId: session.user.id }, { userBId: session.user.id }],
       },
     },
     data: { readAt: new Date() },
@@ -31,7 +31,7 @@ export default async function AdminConversationPage({
   if (!thread) notFound();
 
   const otherPerson =
-    thread.member.id === session.user.id ? thread.admin : thread.member;
+    thread.userA.id === session.user.id ? thread.userB : thread.userA;
 
   return (
     <div className="space-y-6">

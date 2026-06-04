@@ -84,8 +84,8 @@ model User {
   xpEvents               XpEvent[]
   supportThreads         SupportThread[]
   supportMessages        SupportMessage[]  @relation("SupportSender")
-  privateThreadsAsMember PrivateThread[]   @relation("MemberThreads")
-  privateThreadsAsAdmin  PrivateThread[]   @relation("AdminThreads")
+  privateThreadsAsA      PrivateThread[]   @relation("ThreadsAsA")
+  privateThreadsAsB      PrivateThread[]   @relation("ThreadsAsB")
   privateMessages        PrivateMessage[]  @relation("PrivateSender")
   notifications          Notification[]
   pushSubscriptions      PushSubscription[]
@@ -379,21 +379,25 @@ model SupportMessage {
   @@index([threadId, createdAt])
 }
 
-// ────── PRIVATE MESSAGING (admin ↔ membre) ──────
+// ────── PRIVATE MESSAGING (user ↔ user) ──────
+// userAId / userBId sont génériques (pas de notion admin/member ici).
+// Convention applicative : à la création, on trie les 2 ids
+// lexicographiquement → userAId < userBId. Ça garantit l'unicité
+// (sinon (a,b) et (b,a) pourraient coexister) et facilite les lookups.
 model PrivateThread {
   id            String   @id @default(cuid())
-  memberId      String
-  adminId       String
+  userAId       String
+  userBId       String
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
 
-  member   User             @relation("MemberThreads", fields: [memberId], references: [id], onDelete: Cascade)
-  admin    User             @relation("AdminThreads", fields: [adminId], references: [id], onDelete: Cascade)
+  userA    User             @relation("ThreadsAsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB    User             @relation("ThreadsAsB", fields: [userBId], references: [id], onDelete: Cascade)
   messages PrivateMessage[]
 
-  @@unique([memberId, adminId])
-  @@index([memberId])
-  @@index([adminId])
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
 }
 
 model PrivateMessage {

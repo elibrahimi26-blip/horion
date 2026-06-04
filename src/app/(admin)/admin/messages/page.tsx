@@ -13,7 +13,7 @@ export default async function AdminMessagesPage() {
   if (!session?.user) return null;
 
   const [threads, members] = await Promise.all([
-    listMyThreads(session.user.id, "ADMIN"),
+    listMyThreads(session.user.id),
     listMembersForAdmin(session.user.id),
   ]);
 
