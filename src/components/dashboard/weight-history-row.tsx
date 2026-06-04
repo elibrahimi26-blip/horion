@@ -5,25 +5,12 @@ import { useFormState } from "react-dom";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { formatDateTime, toLocalInput } from "@/lib/format";
 import {
   editBodyWeightEntryAction,
   deleteBodyWeightEntryAction,
 } from "@/features/body-weight/actions";
 import { initialBodyWeightState } from "@/features/body-weight/state";
-
-const fmt = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function toLocalInput(d: Date) {
-  const offset = d.getTimezoneOffset();
-  const local = new Date(d.getTime() - offset * 60_000);
-  return local.toISOString().slice(0, 16);
-}
 
 export function WeightHistoryRow({
   entry,
@@ -71,7 +58,7 @@ export function WeightHistoryRow({
             id={`d-${entry.id}`}
             name="recordedAt"
             type="datetime-local"
-            defaultValue={toLocalInput(new Date(entry.recordedAt))}
+            defaultValue={toLocalInput(entry.recordedAt)}
             max={new Date().toISOString().slice(0, 16)}
             className="w-48"
           />
@@ -103,7 +90,7 @@ export function WeightHistoryRow({
           {entry.weightKg.toLocaleString("fr-FR")} kg
         </p>
         <p className="text-xs text-muted-foreground">
-          {fmt.format(new Date(entry.recordedAt))}
+          {formatDateTime(entry.recordedAt)}
         </p>
       </div>
       <div className="flex gap-1">

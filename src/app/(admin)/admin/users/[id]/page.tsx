@@ -6,23 +6,10 @@ import { XpProgress } from "@/components/shared/xp-progress";
 import { UserAdminActions } from "@/components/admin/user-admin-actions";
 import { listXpEvents, sumUserXp } from "@/features/xp/service";
 import { XP_LABELS } from "@/features/xp/events";
+import { formatDateMonthYear, formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-const dateFmt = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
-
-const dateTimeFmt = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
 
 export default async function AdminUserDetailPage({
   params,
@@ -137,11 +124,11 @@ export default async function AdminUserDetailPage({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Inscrit" value={dateFmt.format(user.createdAt)} />
+        <Stat label="Inscrit" value={formatDateMonthYear(user.createdAt)} />
         <Stat
           label="Dernière connexion"
           value={
-            user.lastLoginAt ? dateFmt.format(user.lastLoginAt) : "Jamais"
+            user.lastLoginAt ? formatDateMonthYear(user.lastLoginAt) : "Jamais"
           }
         />
         <Stat label="Séances créées" value={String(workoutsTotal)} />
@@ -194,7 +181,7 @@ export default async function AdminUserDetailPage({
                 <div key={s.id} className="rounded-md border p-3">
                   <p className="text-sm font-medium">{s.workout.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {dateTimeFmt.format(s.endedAt!)}
+                    {formatDateTime(s.endedAt!)}
                     {s.durationSec
                       ? ` · ${Math.round(s.durationSec / 60)} min`
                       : ""}
@@ -223,7 +210,7 @@ export default async function AdminUserDetailPage({
                   <span>{XP_LABELS[e.type]}</span>
                   <span className="flex gap-3 text-xs">
                     <span className="text-muted-foreground">
-                      {dateFmt.format(e.createdAt)}
+                      {formatDateMonthYear(e.createdAt)}
                     </span>
                     <span className="font-medium text-primary tabular-nums">
                       +{e.amount}
@@ -252,7 +239,7 @@ export default async function AdminUserDetailPage({
                 >
                   <span className="tabular-nums">{bw.weightKg} kg</span>
                   <span className="text-xs text-muted-foreground">
-                    {dateFmt.format(bw.recordedAt)}
+                    {formatDateMonthYear(bw.recordedAt)}
                   </span>
                 </li>
               ))}

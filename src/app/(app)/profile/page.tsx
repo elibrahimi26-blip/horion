@@ -9,12 +9,7 @@ import { XpProgress } from "@/components/shared/xp-progress";
 import { PushNotificationsCard } from "@/components/profile/push-notifications-card";
 import { listXpEvents, sumUserXp } from "@/features/xp/service";
 import { XP_LABELS } from "@/features/xp/events";
-
-const dateFmt = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+import { formatDateMonthYear } from "@/lib/format";
 
 const dateTimeFmt = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -56,7 +51,7 @@ export default async function ProfilePage() {
         <div className="flex-1 space-y-1">
           <p className="text-lg font-semibold">{user.username}</p>
           <p className="text-xs text-muted-foreground">
-            Membre depuis {dateFmt.format(user.createdAt)}
+            Membre depuis {formatDateMonthYear(user.createdAt)}
           </p>
         </div>
       </div>

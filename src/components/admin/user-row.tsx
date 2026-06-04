@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTransition } from "react";
 import type { Role, UserStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { formatDateShort } from "@/lib/format";
 import {
   reactivateUserAction,
   suspendUserAction,
@@ -22,12 +23,6 @@ export type AdminUserRow = {
   usernameLocked: boolean;
   usernameChangesCount: number;
 };
-
-const dateFmt = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
 
 export function UserRow({ user }: { user: AdminUserRow }) {
   const [pending, startTransition] = useTransition();
@@ -53,9 +48,9 @@ export function UserRow({ user }: { user: AdminUserRow }) {
         </p>
         <p className="text-xs text-muted-foreground">{user.email}</p>
         <p className="text-xs text-muted-foreground">
-          Inscrit le {dateFmt.format(user.createdAt)}
+          Inscrit le {formatDateShort(user.createdAt)}
           {user.lastLoginAt
-            ? ` · Dernière connexion ${dateFmt.format(user.lastLoginAt)}`
+            ? ` · Dernière connexion ${formatDateShort(user.lastLoginAt)}`
             : " · Jamais connecté"}
         </p>
       </Link>
