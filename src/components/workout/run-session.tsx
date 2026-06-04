@@ -38,12 +38,19 @@ type ExistingSet = {
   setNumber: number;
 };
 
+type LastSet = {
+  weightKg: number | null;
+  reps: number | null;
+  durationSec: number | null;
+};
+
 type Props = {
   workout: { id: string; name: string };
   exercises: ExerciseLine[];
   sessionId: string;
   sessionStartedAt: string; // ISO string from server
   existingSets: ExistingSet[];
+  lastSets: Record<string, LastSet>;
 };
 
 export function RunSession({
@@ -52,6 +59,7 @@ export function RunSession({
   sessionId,
   sessionStartedAt,
   existingSets,
+  lastSets,
 }: Props) {
   const router = useRouter();
   const startedAt = new Date(sessionStartedAt);
@@ -81,6 +89,11 @@ export function RunSession({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  // Prédictions : valeurs serveur (dernière fois) + mises à jour au fur et
+  // à mesure des séries validées dans la session courante.
+  const [predictions, setPredictions] =
+    useState<Record<string, LastSet>>(lastSets);
+
   useWakeLock(true);
   const elapsed = useElapsedSeconds(startedAt);
   const rest = useRestTimer();
@@ -103,14 +116,28 @@ export function RunSession({
 
   const current = exercises[currentIdx];
 
-  // Reset les inputs quand on change d'exercice
+  // Reset les inputs quand on change d'exercice : on pré-remplit avec
+  // la prédiction (dernière performance), sinon avec la cible définie
+  // dans le workout, sinon vide.
   useEffect(() => {
     if (!current) return;
-    setWeightInput(
-      current.targetWeightKg !== null ? String(current.targetWeightKg) : "",
-    );
-    setRepsInput("");
+    const pred = predictions[current.exerciseId];
+    const predWeight = pred?.weightKg;
+    const predRepsOrDuration = current.isCardio ? pred?.durationSec : pred?.reps;
+
+    if (predWeight != null) {
+      setWeightInput(String(predWeight));
+    } else if (current.targetWeightKg !== null) {
+      setWeightInput(String(current.targetWeightKg));
+    } else {
+      setWeightInput("");
+    }
+
+    setRepsInput(predRepsOrDuration != null ? String(predRepsOrDuration) : "");
     setSaveError(null);
+    // On exclut volontairement `predictions` des deps : on ne veut pas
+    // re-fill les inputs à chaque set validé, juste au changement d'exo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx, current?.targetWeightKg]);
 
   if (!current) {
@@ -148,6 +175,18 @@ export function RunSession({
           ...completed,
           [current.exerciseId]: nextSetNumber,
         });
+
+        // Met à jour la prédiction avec la valeur qu'on vient de saisir
+        // → la prochaine série du même exo (ou la prochaine séance) repartira
+        // de cette valeur.
+        setPredictions((prev) => ({
+          ...prev,
+          [current.exerciseId]: {
+            weightKg,
+            reps: current.isCardio ? null : repsOrDuration,
+            durationSec: current.isCardio ? repsOrDuration : null,
+          },
+        }));
 
         if (current.restSeconds && nextSetNumber < current.targetSets) {
           rest.start(current.restSeconds);
@@ -279,7 +318,22 @@ export function RunSession({
 
         {!isExerciseDone ? (
           <div className="space-y-4 border-t pt-4">
-            <p className="text-sm font-medium">Série {nextSetNumber}</p>
+            <div className="flex items-baseline justify-between">
+              <p className="text-sm font-medium">Série {nextSetNumber}</p>
+              {(() => {
+                const pred = predictions[current.exerciseId];
+                if (!pred || pred.weightKg == null) return null;
+                const rpd = current.isCardio ? pred.durationSec : pred.reps;
+                const label = current.isCardio
+                  ? `${pred.weightKg} kg · ${rpd ?? "?"} s`
+                  : `${pred.weightKg} kg × ${rpd ?? "?"}`;
+                return (
+                  <span className="text-xs text-muted-foreground">
+                    Dernière fois : <span className="font-medium">{label}</span>
+                  </span>
+                );
+              })()}
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
@@ -291,6 +345,7 @@ export function RunSession({
                   type="number"
                   step="0.5"
                   min={0}
+                  max={500}
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
                   inputMode="decimal"
@@ -304,11 +359,13 @@ export function RunSession({
                 <Input
                   id="reps"
                   type="number"
-                  min={0}
+                  min={1}
+                  max={current.isCardio ? 7200 : 200}
                   value={repsInput}
                   onChange={(e) => setRepsInput(e.target.value)}
                   inputMode="numeric"
                   autoComplete="off"
+                  required
                 />
               </div>
             </div>
@@ -320,7 +377,7 @@ export function RunSession({
             <Button
               className="w-full"
               size="lg"
-              disabled={pending}
+              disabled={pending || !repsInput.trim() || Number(repsInput) <= 0}
               onClick={validateSet}
             >
               {pending ? "Enregistrement…" : "Série terminée"}

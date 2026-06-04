@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, TrendingDown, TrendingUp } from "lucide-react";
+import { Flame, Play, TrendingDown, TrendingUp } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
@@ -16,10 +16,12 @@ import {
   getStreak,
   getWeeklyVolume,
 } from "@/features/stats/queries";
+import { getRecentlyUsedWorkouts } from "@/features/sessions/queries";
 import {
   latestBodyWeight,
   listBodyWeights,
 } from "@/features/body-weight/queries";
+import { formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const MUSCLE_WINDOW_DAYS = 28;
@@ -45,6 +47,7 @@ export default async function DashboardPage() {
     muscleVolume,
     weightEntries,
     lastWeight,
+    recentWorkouts,
   ] = await Promise.all([
     sumUserXp(userId),
     db.workout.count({ where: { authorId: userId, deletedAt: null } }),
@@ -54,6 +57,7 @@ export default async function DashboardPage() {
     getMuscleVolume(userId, MUSCLE_WINDOW_DAYS),
     listBodyWeights(userId, WEIGHT_LOOKBACK_DAYS),
     latestBodyWeight(userId),
+    getRecentlyUsedWorkouts(userId, 3),
   ]);
 
   const weightChartData = weightEntries.map((e) => ({
@@ -93,6 +97,42 @@ export default async function DashboardPage() {
       <Card className="p-5">
         <XpProgress totalXp={totalXp} />
       </Card>
+
+      {recentWorkouts.length > 0 ? (
+        <section className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Reprendre
+            </h3>
+            <Link
+              href="/workouts"
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Toutes mes séances →
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {recentWorkouts.map((w) => (
+              <Link
+                key={w.workoutId}
+                href={`/workouts/${w.workoutId}/run`}
+                className="flex items-center gap-3 rounded-md border bg-card p-3 transition-colors hover:border-primary/50 hover:bg-primary/5"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Play className="h-4 w-4 fill-current" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{w.workoutName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Dernière fois {formatRelative(w.endedAt)}
+                  </p>
+                </div>
+                <span className="text-xs text-primary">Relancer</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard
