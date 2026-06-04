@@ -36,11 +36,18 @@ function parseExerciseFormData(formData: FormData) {
       ? Number(estimatedRaw)
       : null;
 
+  const imagePathRaw = formData.get("imagePath");
+  const imagePath =
+    typeof imagePathRaw === "string" && imagePathRaw.trim().length > 0
+      ? imagePathRaw.trim()
+      : null;
+
   return {
     name: formData.get("name"),
     description: (formData.get("description") as string | null)?.trim() || null,
     isCardio: formData.get("isCardio") === "on",
     estimatedSeconds,
+    imagePath,
     muscles,
   };
 }
@@ -66,6 +73,7 @@ export async function createExerciseAction(
       description: parsed.data.description ?? null,
       isCardio: parsed.data.isCardio,
       estimatedSeconds: parsed.data.estimatedSeconds ?? null,
+      imagePaths: parsed.data.imagePath ? [parsed.data.imagePath] : [],
       muscles: {
         create: parsed.data.muscles.map((m) => ({
           muscleGroupId: m.muscleGroupId,
@@ -104,6 +112,7 @@ export async function updateExerciseAction(
         description: parsed.data.description ?? null,
         isCardio: parsed.data.isCardio,
         estimatedSeconds: parsed.data.estimatedSeconds ?? null,
+        imagePaths: parsed.data.imagePath ? [parsed.data.imagePath] : [],
       },
     }),
     db.exerciseMuscle.deleteMany({ where: { exerciseId } }),

@@ -20,6 +20,11 @@ export const exerciseFormSchema = z
       .positive("Doit être positif")
       .nullable()
       .optional(),
+    imagePath: z
+      .string()
+      .regex(/^[A-Za-z0-9_.-]+\/[0-9]+\.(jpg|jpeg|png|webp|gif)$/i, "Chemin d'image invalide")
+      .nullable()
+      .optional(),
     muscles: z
       .array(
         z.object({

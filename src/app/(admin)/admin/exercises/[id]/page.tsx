@@ -42,6 +42,7 @@ export default async function EditExercisePage({
           description: exercise.description,
           isCardio: exercise.isCardio,
           estimatedSeconds: exercise.estimatedSeconds,
+          imagePath: exercise.imagePaths[0] ?? null,
           muscles: exercise.muscles.map((m) => ({
             muscleGroupId: m.muscleGroupId,
             isPrimary: m.isPrimary,
