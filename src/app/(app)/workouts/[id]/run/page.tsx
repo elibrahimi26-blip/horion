@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { RunSession } from "@/components/workout/run-session";
 import { getWorkoutWithCurrentVersion } from "@/features/workouts/queries";
+import { getLastSetsForExercises } from "@/features/sessions/queries";
 
 // Le contenu de la session est dynamique : ne pas mettre en cache.
 export const dynamic = "force-dynamic";
@@ -54,6 +55,9 @@ export default async function RunWorkoutPage({
     });
   }
 
+  const exerciseIds = currentVersion.exercises.map((ex) => ex.exerciseId);
+  const lastSets = await getLastSetsForExercises(session.user.id, exerciseIds);
+
   return (
     <RunSession
       workout={{ id: workout.id, name: workout.name }}
@@ -71,6 +75,7 @@ export default async function RunWorkoutPage({
       sessionId={activeSession.id}
       sessionStartedAt={activeSession.startedAt.toISOString()}
       existingSets={activeSession.sets}
+      lastSets={lastSets}
     />
   );
 }
