@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { auth, signOut } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { MAX_USERNAME_CHANGES } from "@/features/auth/service";
+import { MAX_USERNAME_CHANGES, verifyPassword } from "@/features/auth/service";
 import { updateBioSchema, updateUsernameSchema } from "./schemas";
 import type { ProfileFormState } from "./state";
 
@@ -112,19 +112,29 @@ export async function updateBioAction(
 }
 
 // Hard delete RGPD (article 17 - droit à l'effacement).
-// La confirmation par re-saisie du pseudo se fait côté client.
-// Toutes les données liées sont supprimées par cascade Prisma.
+// Confirmation par re-saisie du pseudo + vérification du mot de passe :
+// empêche la suppression accidentelle ou par session laissée ouverte.
 export async function deleteMyAccountAction(formData: FormData) {
   const session = await requireUser();
 
-  // Double-check : la confirmation pseudo doit correspondre
   const confirmation = formData.get("confirmUsername");
+  const password = formData.get("password");
+  if (typeof password !== "string" || password.length === 0) {
+    throw new Error("Mot de passe requis");
+  }
+
   const me = await db.user.findUniqueOrThrow({
     where: { id: session.user.id },
-    select: { username: true },
+    select: { username: true, passwordHash: true },
   });
+
   if (confirmation !== me.username) {
     throw new Error("Confirmation invalide");
+  }
+
+  const ok = await verifyPassword(password, me.passwordHash);
+  if (!ok) {
+    throw new Error("Mot de passe incorrect");
   }
 
   await db.user.delete({ where: { id: session.user.id } });

@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { signIn, signOut } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email";
+import { checkRateLimit, formatRetryAfter, getClientIp } from "@/lib/rate-limit";
 import { seedDefaultCategories } from "@/features/categories/service";
 import {
   adminNewRegistrationEmail,
@@ -24,6 +25,13 @@ import {
   tokenExpiry,
 } from "./service";
 import type { AuthFormState } from "./state";
+
+function rateLimitedError(retryAfterSec: number): AuthFormState {
+  return {
+    status: "error",
+    error: `Trop de tentatives. Réessaie dans ${formatRetryAfter(retryAfterSec)}.`,
+  };
+}
 
 // ────── Register ──────
 export async function registerAction(
@@ -45,6 +53,10 @@ export async function registerAction(
   }
 
   const { email, username, password } = parsed.data;
+
+  const ip = getClientIp();
+  const rl = await checkRateLimit("register", ip, 5, 60 * 60);
+  if (!rl.success) return rateLimitedError(rl.retryAfterSec);
 
   const [existingEmail, existingUsername] = await Promise.all([
     db.user.findUnique({ where: { email } }),
@@ -99,6 +111,14 @@ export async function loginAction(
     };
   }
 
+  const ip = getClientIp();
+  const [ipLimit, emailLimit] = await Promise.all([
+    checkRateLimit("login:ip", ip, 10, 10 * 60),
+    checkRateLimit("login:email", parsed.data.email, 5, 10 * 60),
+  ]);
+  if (!ipLimit.success) return rateLimitedError(ipLimit.retryAfterSec);
+  if (!emailLimit.success) return rateLimitedError(emailLimit.retryAfterSec);
+
   try {
     await signIn("credentials", {
       email: parsed.data.email,
@@ -139,6 +159,14 @@ export async function forgotPasswordAction(
   if (!parsed.success) {
     return { status: "error", error: "Email invalide." };
   }
+
+  const ip = getClientIp();
+  const [ipLimit, emailLimit] = await Promise.all([
+    checkRateLimit("forgot:ip", ip, 5, 60 * 60),
+    checkRateLimit("forgot:email", parsed.data.email, 3, 60 * 60),
+  ]);
+  if (!ipLimit.success) return rateLimitedError(ipLimit.retryAfterSec);
+  if (!emailLimit.success) return rateLimitedError(emailLimit.retryAfterSec);
 
   const user = await db.user.findUnique({ where: { email: parsed.data.email } });
 
@@ -186,6 +214,10 @@ export async function resetPasswordAction(
     };
   }
 
+  const ip = getClientIp();
+  const rl = await checkRateLimit("reset:ip", ip, 5, 10 * 60);
+  if (!rl.success) return rateLimitedError(rl.retryAfterSec);
+
   const tokenRow = await db.verificationToken.findUnique({
     where: { token: parsed.data.token },
   });
@@ -203,13 +235,22 @@ export async function resetPasswordAction(
 
   const passwordHash = await hashPassword(parsed.data.password);
 
-  await db.$transaction([
-    db.user.update({
-      where: { email: tokenRow.email },
-      data: { passwordHash },
-    }),
-    db.verificationToken.delete({ where: { id: tokenRow.id } }),
-  ]);
+  try {
+    // Delete d'abord : si une requête concurrente a déjà consommé le token,
+    // le delete throw P2025 → la transaction abort, l'update n'a pas lieu.
+    await db.$transaction([
+      db.verificationToken.delete({ where: { id: tokenRow.id } }),
+      db.user.update({
+        where: { email: tokenRow.email },
+        data: { passwordHash },
+      }),
+    ]);
+  } catch {
+    return {
+      status: "error",
+      error: "Lien expiré ou invalide. Refais une demande de réinitialisation.",
+    };
+  }
 
   redirect("/login?reset=true");
 }
