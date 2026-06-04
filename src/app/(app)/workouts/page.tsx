@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Bookmark, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { WorkoutCard } from "@/components/workout/workout-card";
 import { auth } from "@/lib/auth";
 import {
@@ -56,18 +58,29 @@ export default async function WorkoutsPage({
       </div>
 
       {workouts.length === 0 ? (
-        <div className="rounded-md border border-dashed p-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {tab === "mine"
-              ? "Tu n'as pas encore créé de séance."
-              : "Tu n'as pas encore enregistré de séance partagée."}
-          </p>
-          {tab === "mine" ? (
-            <Button asChild className="mt-4">
-              <Link href="/workouts/new">Créer ma première séance</Link>
-            </Button>
-          ) : null}
-        </div>
+        tab === "mine" ? (
+          <EmptyState
+            icon={<Dumbbell className="h-6 w-6" />}
+            title="Aucune séance pour l'instant"
+            description="Crée ta première séance pour commencer à t'entraîner. Tu pourras choisir tes exercices, fixer des objectifs et suivre ta progression."
+            action={
+              <Button asChild>
+                <Link href="/workouts/new">Créer ma première séance</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={<Bookmark className="h-6 w-6" />}
+            title="Aucune séance enregistrée"
+            description="Explore le flux communautaire et enregistre les séances qui t'inspirent — tu les retrouveras ici."
+            action={
+              <Button asChild variant="outline">
+                <Link href="/social">Aller sur le flux</Link>
+              </Button>
+            }
+          />
+        )
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {workouts.map((w) => (

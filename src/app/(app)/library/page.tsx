@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { SearchX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ExerciseCard } from "@/components/library/exercise-card";
 import {
   listActiveExercises,
@@ -86,7 +88,22 @@ export default async function LibraryPage({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aucun exercice trouvé.</p>
+        <EmptyState
+          icon={<SearchX className="h-6 w-6" />}
+          title="Aucun exercice ne correspond"
+          description={
+            search || muscleFilter
+              ? "Essaie un autre mot-clé ou retire les filtres."
+              : "La bibliothèque est vide pour le moment."
+          }
+          action={
+            search || muscleFilter ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/library">Réinitialiser les filtres</Link>
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((ex) => (
