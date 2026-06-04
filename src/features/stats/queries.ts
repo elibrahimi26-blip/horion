@@ -19,12 +19,13 @@ function startOfMonday(date: Date): Date {
 // Nombre de jours consécutifs avec au moins une session terminée.
 // Inclut aujourd'hui s'il y a déjà eu une séance ; sinon part d'hier
 // (1 jour de "grâce" pour éviter de casser un streak au matin).
+// take=180 = 6 mois max d'historique — bien au-delà des streaks réalistes.
 export async function getStreak(userId: string): Promise<number> {
   const sessions = await db.workoutSession.findMany({
     where: { userId, endedAt: { not: null } },
     select: { endedAt: true },
     orderBy: { endedAt: "desc" },
-    take: 500,
+    take: 180,
   });
 
   if (sessions.length === 0) return 0;

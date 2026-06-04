@@ -7,9 +7,9 @@ export default async function SocialPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const workouts = await listPublicWorkouts(session.user.id);
+  const { items, nextCursor } = await listPublicWorkouts(session.user.id);
 
-  if (workouts.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
         Aucune séance publique pour l&apos;instant. Sois le premier à partager
@@ -20,13 +20,18 @@ export default async function SocialPage() {
 
   return (
     <div className="space-y-3">
-      {workouts.map((w) => (
+      {items.map((w) => (
         <SocialCard
           key={w.id}
           workout={w}
           currentUserId={session.user.id}
         />
       ))}
+      {nextCursor ? (
+        <p className="text-center text-xs text-muted-foreground">
+          {items.length} séances affichées. Pagination infinie à venir.
+        </p>
+      ) : null}
     </div>
   );
 }
