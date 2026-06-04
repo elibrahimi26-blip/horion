@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { LevelBadge } from "@/components/shared/level-badge";
 import { XpProgress } from "@/components/shared/xp-progress";
+import { PushNotificationsCard } from "@/components/profile/push-notifications-card";
 import { listXpEvents, sumUserXp } from "@/features/xp/service";
 import { XP_LABELS } from "@/features/xp/events";
 
@@ -106,6 +107,8 @@ export default async function ProfilePage() {
           <span>→</span>
         </Link>
       </div>
+
+      <PushNotificationsCard />
 
       <div className="rounded-md border p-6">
         <XpProgress totalXp={totalXp} />

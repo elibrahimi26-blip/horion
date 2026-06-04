@@ -9,7 +9,7 @@
 // Bump à chaque release qui change le CSS/JS shippé pour purger les caches
 // clients (sinon les utilisateurs gardent l'ancienne UI tant qu'ils ne
 // vident pas leur cache manuellement).
-const CACHE_VERSION = "horion-v2-design";
+const CACHE_VERSION = "horion-v3-push";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGES_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -83,4 +83,57 @@ self.addEventListener("fetch", (event) => {
       })(),
     );
   }
+});
+
+// ────── PUSH NOTIFICATIONS ──────
+// Reçoit le payload JSON envoyé par web-push côté serveur :
+// { title, body?, url?, tag? }
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: event.data ? event.data.text() : "Horion" };
+  }
+
+  const title = data.title || "Horion";
+  const options = {
+    body: data.body || "",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: data.tag || "horion-notification",
+    data: { url: data.url || "/" },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Clic sur la notif → focus l'onglet existant ou ouvre une nouvelle fenêtre
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of allClients) {
+        const url = new URL(client.url);
+        if (url.origin === self.location.origin) {
+          await client.focus();
+          if ("navigate" in client) {
+            try {
+              await client.navigate(targetUrl);
+            } catch {
+              // ignore (cross-origin or unsupported)
+            }
+          }
+          return;
+        }
+      }
+      await self.clients.openWindow(targetUrl);
+    })(),
+  );
 });

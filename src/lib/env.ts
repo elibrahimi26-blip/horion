@@ -29,6 +29,11 @@ const envSchema = z.object({
   // ── Rate limit (Upstash) ──
   UPSTASH_REDIS_REST_URL: emptyToUndefined,
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  // ── Web Push (VAPID) ──
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
