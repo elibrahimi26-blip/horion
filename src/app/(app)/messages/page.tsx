@@ -9,8 +9,7 @@ export default async function MessagesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const role = session.user.role === "ADMIN" ? "ADMIN" : "MEMBER";
-  const threads = await listMyThreads(session.user.id, role);
+  const threads = await listMyThreads(session.user.id);
 
   return (
     <div className="space-y-6">
@@ -18,8 +17,8 @@ export default async function MessagesPage() {
 
       {threads.length === 0 ? (
         <p className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Aucune conversation. L&apos;admin peut démarrer une discussion avec
-          toi quand il le souhaite.
+          Aucune conversation pour l&apos;instant. Tu peux contacter un autre
+          membre depuis sa séance publique ou depuis le flux social.
         </p>
       ) : (
         <div className="space-y-2">

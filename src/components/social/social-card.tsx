@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { MessageUserButton } from "@/components/messaging/message-user-button";
 import {
   toggleLikeAction,
   toggleSaveAction,
@@ -96,6 +97,14 @@ export function SocialCard({
         >
           📌 {workout._count.saves}
         </Button>
+        {!isAuthor ? (
+          <MessageUserButton
+            userId={workout.author.id}
+            iconOnly
+            variant="outline"
+            label={`Envoyer un message à ${workout.author.username}`}
+          />
+        ) : null}
         <Button asChild size="sm" variant="ghost" className="ml-auto">
           <Link href={`/workouts/${workout.id}`}>Détail →</Link>
         </Button>

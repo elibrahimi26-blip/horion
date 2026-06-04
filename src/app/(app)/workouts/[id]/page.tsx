@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { WorkoutActions } from "@/components/workout/workout-actions";
 import { WorkoutSocialActions } from "@/components/workout/workout-social-actions";
+import { MessageUserButton } from "@/components/messaging/message-user-button";
 import { auth } from "@/lib/auth";
 import { getWorkoutWithCurrentVersion } from "@/features/workouts/queries";
 import { getWorkoutSocialState } from "@/features/social/queries";
@@ -75,6 +76,8 @@ export default async function WorkoutDetailPage({
                 currentVisibility={workout.visibility}
               />
             </>
+          ) : workout.author ? (
+            <MessageUserButton userId={workout.author.id} />
           ) : null}
         </div>
       </div>

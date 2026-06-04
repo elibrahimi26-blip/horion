@@ -1,17 +1,21 @@
 import { db } from "@/lib/db";
 
-type Role = "MEMBER" | "ADMIN";
+// Tri lexicographique des 2 ids → garantit qu'on crée toujours
+// (a, b) avec a < b. Permet le @@unique([userAId, userBId])
+// de marcher sans avoir à chercher dans les deux ordres.
+export function orderUserPair(id1: string, id2: string) {
+  return id1 < id2 ? { userAId: id1, userBId: id2 } : { userAId: id2, userBId: id1 };
+}
 
-export async function listMyThreads(userId: string, role: Role) {
-  const where =
-    role === "ADMIN" ? { adminId: userId } : { memberId: userId };
-
+export async function listMyThreads(userId: string) {
   const threads = await db.privateThread.findMany({
-    where,
+    where: {
+      OR: [{ userAId: userId }, { userBId: userId }],
+    },
     orderBy: { lastMessageAt: "desc" },
     include: {
-      member: { select: { id: true, username: true } },
-      admin: { select: { id: true, username: true } },
+      userA: { select: { id: true, username: true, avatarUrl: true } },
+      userB: { select: { id: true, username: true, avatarUrl: true } },
       messages: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -21,7 +25,6 @@ export async function listMyThreads(userId: string, role: Role) {
   });
 
   // Compte les messages non lus pour chaque thread (envoyés par l'autre).
-  // N+1 acceptable pour ~10 users avec ≤ 1 thread chacun.
   const unreadCounts = await Promise.all(
     threads.map((t) =>
       db.privateMessage.count({
@@ -44,11 +47,11 @@ export async function getThread(threadId: string, userId: string) {
   return db.privateThread.findFirst({
     where: {
       id: threadId,
-      OR: [{ memberId: userId }, { adminId: userId }],
+      OR: [{ userAId: userId }, { userBId: userId }],
     },
     include: {
-      member: { select: { id: true, username: true } },
-      admin: { select: { id: true, username: true } },
+      userA: { select: { id: true, username: true, avatarUrl: true } },
+      userB: { select: { id: true, username: true, avatarUrl: true } },
       messages: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -63,7 +66,8 @@ export async function getThread(threadId: string, userId: string) {
   });
 }
 
-// Liste les membres actifs avec leur thread (s'il existe) côté admin.
+// Liste tous les membres actifs avec leur thread existant avec l'admin courant.
+// Utilisé par le panel admin pour démarrer une conversation rapidement.
 export async function listMembersForAdmin(adminId: string) {
   const [members, threads] = await Promise.all([
     db.user.findMany({
@@ -72,15 +76,19 @@ export async function listMembersForAdmin(adminId: string) {
       orderBy: { username: "asc" },
     }),
     db.privateThread.findMany({
-      where: { adminId },
-      select: { id: true, memberId: true },
+      where: { OR: [{ userAId: adminId }, { userBId: adminId }] },
+      select: { id: true, userAId: true, userBId: true },
     }),
   ]);
 
-  const threadByMember = new Map(threads.map((t) => [t.memberId, t.id]));
+  const threadByPartner = new Map<string, string>();
+  for (const t of threads) {
+    const partnerId = t.userAId === adminId ? t.userBId : t.userAId;
+    threadByPartner.set(partnerId, t.id);
+  }
 
   return members.map((m) => ({
     ...m,
-    threadId: threadByMember.get(m.id) ?? null,
+    threadId: threadByPartner.get(m.id) ?? null,
   }));
 }

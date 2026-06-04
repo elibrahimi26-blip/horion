@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 type Thread = {
   id: string;
   lastMessageAt: Date;
-  member: { id: string; username: string };
-  admin: { id: string; username: string };
+  userA: { id: string; username: string };
+  userB: { id: string; username: string };
   messages: { body: string; senderId: string; createdAt: Date }[];
   unreadCount: number;
 };
@@ -19,7 +19,7 @@ type Props = {
 
 export function ThreadListItem({ thread, currentUserId, hrefBase }: Props) {
   const otherPerson =
-    thread.member.id === currentUserId ? thread.admin : thread.member;
+    thread.userA.id === currentUserId ? thread.userB : thread.userA;
   const lastMessage = thread.messages[0];
   const isUnread = thread.unreadCount > 0;
 

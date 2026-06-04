@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createNotification } from "@/features/notifications/service";
+import { orderUserPair } from "./queries";
 import { messageSchema } from "./schemas";
 import type { MessageFormState } from "./state";
 
@@ -33,17 +34,16 @@ export async function sendPrivateMessageAction(
   const thread = await db.privateThread.findFirst({
     where: {
       id: threadId,
-      OR: [{ memberId: session.user.id }, { adminId: session.user.id }],
+      OR: [{ userAId: session.user.id }, { userBId: session.user.id }],
     },
-    select: { id: true, memberId: true, adminId: true },
+    select: { id: true, userAId: true, userBId: true },
   });
   if (!thread) {
     return { error: "Conversation introuvable" };
   }
 
   const recipientId =
-    thread.memberId === session.user.id ? thread.adminId : thread.memberId;
-  const recipientIsAdmin = recipientId === thread.adminId;
+    thread.userAId === session.user.id ? thread.userBId : thread.userAId;
 
   await db.privateMessage.create({
     data: {
@@ -58,14 +58,23 @@ export async function sendPrivateMessageAction(
     data: { lastMessageAt: new Date() },
   });
 
+  // Détermine l'URL côté destinataire : admins lisent dans /admin/messages,
+  // membres dans /messages.
+  const recipient = await db.user.findUnique({
+    where: { id: recipientId },
+    select: { role: true },
+  });
+  const url =
+    recipient?.role === "ADMIN"
+      ? `/admin/messages/${threadId}`
+      : `/messages/${threadId}`;
+
   await createNotification({
     userId: recipientId,
     type: "NEW_PRIVATE_MESSAGE",
     title: `Nouveau message de ${session.user.name ?? "Horion"}`,
     body: parsed.data.body.slice(0, 120),
-    url: recipientIsAdmin
-      ? `/admin/messages/${threadId}`
-      : `/messages/${threadId}`,
+    url,
   });
 
   revalidatePath(`/messages/${threadId}`);
@@ -76,35 +85,48 @@ export async function sendPrivateMessageAction(
   return { error: null };
 }
 
-// Admin uniquement : démarre (ou récupère) le thread avec un membre.
-export async function startThreadWithMemberAction(memberId: string) {
+// Démarre (ou récupère) un thread entre l'utilisateur connecté et un autre user.
+// Ouvert à tous les utilisateurs ACTIVE — y compris member → member, member →
+// admin, admin → member, admin → admin.
+export async function startThreadWithUserAction(otherUserId: string) {
   const session = await requireUser();
-  if (session.user.role !== "ADMIN") throw new Error("Admin only");
-
-  const member = await db.user.findFirst({
-    where: { id: memberId, status: "ACTIVE" },
-    select: { id: true },
-  });
-  if (!member) throw new Error("Membre introuvable");
-
-  const existing = await db.privateThread.findUnique({
-    where: {
-      memberId_adminId: { memberId, adminId: session.user.id },
-    },
-    select: { id: true },
-  });
-
-  let threadId: string;
-  if (existing) {
-    threadId = existing.id;
-  } else {
-    const created = await db.privateThread.create({
-      data: { memberId, adminId: session.user.id },
-      select: { id: true },
-    });
-    threadId = created.id;
+  if (otherUserId === session.user.id) {
+    throw new Error("Impossible d'envoyer un message à soi-même");
   }
 
+  const other = await db.user.findFirst({
+    where: { id: otherUserId, status: "ACTIVE" },
+    select: { id: true, role: true },
+  });
+  if (!other) throw new Error("Utilisateur introuvable");
+
+  const pair = orderUserPair(session.user.id, otherUserId);
+
+  const existing = await db.privateThread.findUnique({
+    where: { userAId_userBId: pair },
+    select: { id: true },
+  });
+
+  const threadId =
+    existing?.id ??
+    (
+      await db.privateThread.create({
+        data: pair,
+        select: { id: true },
+      })
+    ).id;
+
+  // Redirige vers la bonne route selon le rôle de l'utilisateur courant.
+  // Les admins ont leur propre vue avec liste de membres + démarrage rapide.
+  const destination =
+    session.user.role === "ADMIN"
+      ? `/admin/messages/${threadId}`
+      : `/messages/${threadId}`;
+
+  revalidatePath("/messages");
   revalidatePath("/admin/messages");
-  redirect(`/admin/messages/${threadId}`);
+  redirect(destination);
 }
+
+// Alias rétro-compat : ancien nom utilisé dans le panel admin.
+export const startThreadWithMemberAction = startThreadWithUserAction;
