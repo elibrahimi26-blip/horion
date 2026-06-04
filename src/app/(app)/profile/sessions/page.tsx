@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Dumbbell } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { SessionHistoryRow } from "@/components/profile/session-history-row";
 import { ResetSessionsButton } from "@/components/profile/reset-sessions-button";
 
@@ -47,9 +48,16 @@ export default async function ProfileSessionsPage() {
           Historique ({items.length})
         </h3>
         {items.length === 0 ? (
-          <p className="rounded-md border p-6 text-center text-sm text-muted-foreground">
-            Aucune séance enregistrée.
-          </p>
+          <EmptyState
+            icon={<Dumbbell className="h-6 w-6" />}
+            title="Aucune séance enregistrée"
+            description="Lance ta première séance depuis l'écran des séances. L'historique s'affichera ici."
+            action={
+              <Button asChild>
+                <Link href="/workouts">Voir mes séances</Link>
+              </Button>
+            }
+          />
         ) : (
           <div className="space-y-2">
             {items.map((s) => (

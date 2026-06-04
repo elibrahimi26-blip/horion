@@ -86,6 +86,10 @@ export function WorkoutForm({
   }
 
   function removeLine(idx: number) {
+    const line = lines[idx];
+    if (!line) return;
+    const msg = `Retirer "${line.exerciseName}" de la séance ?`;
+    if (!confirm(msg)) return;
     setLines(lines.filter((_, i) => i !== idx));
   }
 

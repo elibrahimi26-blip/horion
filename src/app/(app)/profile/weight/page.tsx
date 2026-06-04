@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Scale } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { WeightInput } from "@/components/dashboard/weight-input";
 import { WeightHistoryRow } from "@/components/dashboard/weight-history-row";
 
@@ -42,9 +43,11 @@ export default async function WeightHistoryPage() {
           Historique ({entries.length})
         </h3>
         {entries.length === 0 ? (
-          <p className="rounded-md border p-6 text-center text-sm text-muted-foreground">
-            Aucune mesure enregistrée.
-          </p>
+          <EmptyState
+            icon={<Scale className="h-6 w-6" />}
+            title="Aucune mesure"
+            description="Ajoute ta première pesée avec le formulaire ci-dessus pour visualiser ta progression."
+          />
         ) : (
           <div className="space-y-2">
             {entries.map((e) => (

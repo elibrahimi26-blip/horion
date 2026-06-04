@@ -1,5 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Share2 } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { SocialCard } from "@/components/social/social-card";
 import { listPublicWorkouts } from "@/features/social/queries";
 
@@ -11,10 +15,16 @@ export default async function SocialPage() {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-        Aucune séance publique pour l&apos;instant. Sois le premier à partager
-        en passant une de tes séances en mode &laquo; public &raquo;.
-      </div>
+      <EmptyState
+        icon={<Share2 className="h-6 w-6" />}
+        title="Aucune séance partagée"
+        description="Sois le premier à partager ! Passe une de tes séances en mode « public » depuis l'édition pour qu'elle apparaisse ici."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/workouts">Voir mes séances</Link>
+          </Button>
+        }
+      />
     );
   }
 

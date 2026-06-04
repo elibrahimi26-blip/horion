@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export type PickerExercise = {
   id: string;
@@ -50,17 +53,44 @@ export function ExercisePickerModal({
   const [muscleSlugs, setMuscleSlugs] = useState<Set<string>>(new Set());
   const [levels, setLevels] = useState<Set<string>>(new Set());
   const [recentlyAdded, setRecentlyAdded] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Focus trap : cycle Tab à l'intérieur du dialog
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+          FOCUSABLE_SELECTOR,
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0]!;
+        const last = focusables[focusables.length - 1]!;
+        const active = document.activeElement;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
+
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
+      // Restaure le focus sur l'élément qui a ouvert le modal
+      previouslyFocused?.focus();
     };
   }, [onClose]);
 
@@ -119,6 +149,7 @@ export function ExercisePickerModal({
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         className={cn(
           "mx-auto flex w-full max-w-5xl flex-col",
           "h-full sm:my-8 sm:h-[calc(100vh-4rem)] sm:max-h-[800px]",

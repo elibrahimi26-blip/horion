@@ -1,5 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { auth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { listMyThreads } from "@/features/messaging/queries";
 import { ThreadListItem } from "@/components/messaging/thread-list-item";
 
@@ -16,10 +20,16 @@ export default async function MessagesPage() {
       <h2 className="text-2xl font-bold">Messages</h2>
 
       {threads.length === 0 ? (
-        <p className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Aucune conversation pour l&apos;instant. Tu peux contacter un autre
-          membre depuis sa séance publique ou depuis le flux social.
-        </p>
+        <EmptyState
+          icon={<MessageCircle className="h-6 w-6" />}
+          title="Aucune conversation"
+          description="Démarre une discussion en cliquant sur l'avatar d'un membre depuis une séance publique du flux."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/social">Aller sur le flux</Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-2">
           {threads.map((t) => (

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -227,6 +229,15 @@ export function RunSession({
 
   return (
     <div className="space-y-6">
+      {/* Back link */}
+      <Link
+        href={`/workouts/${workout.id}`}
+        className="inline-flex items-center text-xs text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Retour à la séance
+      </Link>
+
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="space-y-1">
