@@ -93,49 +93,72 @@ export default async function WorkoutDetailPage({
         <div className="space-y-2">
           {currentVersion.exercises.map((ex, i) => {
             const primary = ex.exercise.muscles.find((m) => m.isPrimary);
+            const imageSrc = ex.exercise.mediaUrl
+              ? ex.exercise.mediaUrl
+              : ex.exercise.imagePaths[0]
+                ? `/api/exercise-images/${ex.exercise.imagePaths[0]}`
+                : null;
             return (
-              <div key={ex.id} className="rounded-md border p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">
-                      {i + 1}.{" "}
-                      <Link
-                        href={`/library/${ex.exerciseId}`}
-                        className="hover:underline"
-                      >
-                        {ex.exercise.nameFr ?? ex.exercise.name}
-                      </Link>
-                      {ex.exercise.isCardio ? (
-                        <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-900">
-                          cardio
-                        </span>
-                      ) : null}
-                    </p>
-                    {primary ? (
-                      <p className="text-xs text-muted-foreground">
-                        {primary.muscleGroup.name}
-                      </p>
-                    ) : null}
+              <div key={ex.id} className="flex gap-3 rounded-md border p-3">
+                {imageSrc ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={imageSrc}
+                    alt=""
+                    className="h-20 w-20 shrink-0 rounded-md object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div
+                    className="flex h-20 w-20 shrink-0 items-center justify-center rounded-md bg-muted text-2xl opacity-40"
+                    aria-hidden
+                  >
+                    🏋️
                   </div>
-                  <p className="text-sm">
-                    <span className="font-medium">{ex.targetSets}</span>{" "}
-                    série{ex.targetSets > 1 ? "s" : ""}
-                    {ex.targetReps ? ` × ${ex.targetReps}` : ""}
-                    {ex.targetWeightKg !== null
-                      ? ` @ ${ex.targetWeightKg} kg`
-                      : ""}
-                  </p>
+                )}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <p className="font-medium">
+                        {i + 1}.{" "}
+                        <Link
+                          href={`/library/${ex.exerciseId}`}
+                          className="hover:underline"
+                        >
+                          {ex.exercise.nameFr ?? ex.exercise.name}
+                        </Link>
+                        {ex.exercise.isCardio ? (
+                          <span className="ml-2 rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-900">
+                            cardio
+                          </span>
+                        ) : null}
+                      </p>
+                      {primary ? (
+                        <p className="text-xs text-muted-foreground">
+                          {primary.muscleGroup.name}
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="text-sm">
+                      <span className="font-medium">{ex.targetSets}</span>{" "}
+                      série{ex.targetSets > 1 ? "s" : ""}
+                      {ex.targetReps ? ` × ${ex.targetReps}` : ""}
+                      {ex.targetWeightKg !== null
+                        ? ` @ ${ex.targetWeightKg} kg`
+                        : ""}
+                    </p>
+                  </div>
+                  {ex.restSeconds !== null ? (
+                    <p className="text-xs text-muted-foreground">
+                      Repos : {ex.restSeconds} sec
+                    </p>
+                  ) : null}
+                  {ex.notes ? (
+                    <p className="text-xs italic text-muted-foreground">
+                      {ex.notes}
+                    </p>
+                  ) : null}
                 </div>
-                {ex.restSeconds !== null ? (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Repos : {ex.restSeconds} sec
-                  </p>
-                ) : null}
-                {ex.notes ? (
-                  <p className="mt-1 text-xs italic text-muted-foreground">
-                    {ex.notes}
-                  </p>
-                ) : null}
               </div>
             );
           })}

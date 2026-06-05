@@ -71,6 +71,8 @@ export default async function RunWorkoutPage({
         targetWeightKg: ex.targetWeightKg,
         restSeconds: ex.restSeconds,
         notes: ex.notes,
+        mediaUrl: ex.exercise.mediaUrl,
+        imagePaths: ex.exercise.imagePaths,
       }))}
       sessionId={activeSession.id}
       sessionStartedAt={activeSession.startedAt.toISOString()}

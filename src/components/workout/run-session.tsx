@@ -33,6 +33,8 @@ type ExerciseLine = {
   targetWeightKg: number | null;
   restSeconds: number | null;
   notes: string | null;
+  mediaUrl: string | null;
+  imagePaths: string[];
 };
 
 type ExistingSet = {
@@ -298,6 +300,24 @@ export function RunSession({
 
       {/* Current exercise */}
       <div className="space-y-4 rounded-md border p-6">
+        {(() => {
+          const src = current.mediaUrl
+            ? current.mediaUrl
+            : current.imagePaths[0]
+              ? `/api/exercise-images/${current.imagePaths[0]}`
+              : null;
+          if (!src) return null;
+          return (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={src}
+              alt={`Démonstration de ${current.name}`}
+              className="w-full rounded-md object-cover"
+              style={{ aspectRatio: "4/3", maxHeight: "320px" }}
+            />
+          );
+        })()}
+
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="space-y-1">
             <p className="text-xs uppercase text-muted-foreground">
