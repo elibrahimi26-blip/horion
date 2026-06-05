@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
@@ -13,11 +13,13 @@ import {
   useOfflineQueue,
   useSessionPendingSets,
 } from "@/hooks/use-offline-queue";
+import { useRestTimer } from "@/hooks/use-timer";
+import { SessionTimer } from "@/components/workout/session-timer";
+import { RestTimerCard } from "@/components/workout/rest-timer-card";
 import {
-  formatDuration,
-  useElapsedSeconds,
-  useRestTimer,
-} from "@/hooks/use-timer";
+  ensureNotificationPermission,
+  showLocalNotification,
+} from "@/lib/local-notify";
 import {
   cancelSessionAction,
   endSessionAction,
@@ -99,10 +101,22 @@ export function RunSession({
     useState<Record<string, LastSet>>(lastSets);
 
   useWakeLock(true);
-  const elapsed = useElapsedSeconds(startedAt);
-  const rest = useRestTimer();
+  const onRestFinish = useCallback(() => {
+    showLocalNotification("Repos terminé", {
+      body: "C'est reparti pour la prochaine série !",
+      tag: "horion-rest-finished",
+      silent: false,
+    });
+  }, []);
+  const rest = useRestTimer({ onFinish: onRestFinish });
   const { saveSet, pendingCount, isOnline } = useOfflineQueue();
   const queuedForSession = useSessionPendingSets(sessionId);
+
+  // Demande la permission notification au mount (pour pouvoir alerter en
+  // fin de repos sans bloquer la 1ère fois).
+  useEffect(() => {
+    void ensureNotificationPermission();
+  }, []);
 
   // Merge des sets en queue (créés hors-ligne lors d'une précédente
   // visite) dans la map completed au montage.
@@ -229,8 +243,15 @@ export function RunSession({
     });
   }
 
+  // Durée par défaut du timer de repos manuel (en sec). Si l'exo a un
+  // restSeconds défini, on l'utilise ; sinon fallback 90s.
+  const defaultRestSec = current.restSeconds ?? 90;
+
   return (
     <div className="space-y-6">
+      {/* Chrono total séance — sticky en haut, pausable */}
+      <SessionTimer sessionId={sessionId} startedAt={startedAt} />
+
       {/* Back link */}
       <Link
         href={`/workouts/${workout.id}`}
@@ -244,9 +265,6 @@ export function RunSession({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="space-y-1">
           <h2 className="text-xl font-bold">{workout.name}</h2>
-          <p className="text-sm tabular-nums text-muted-foreground">
-            Session en cours · {formatDuration(elapsed)}
-          </p>
           {!isOnline || pendingCount > 0 ? (
             <div className="flex flex-wrap gap-2 text-xs">
               {!isOnline ? (
@@ -282,21 +300,8 @@ export function RunSession({
         </div>
       </div>
 
-      {/* Rest timer */}
-      {rest.running ? (
-        <div className="rounded-md border-2 border-primary bg-primary/5 p-4 text-center">
-          <p className="text-xs uppercase text-muted-foreground">Repos</p>
-          <p className="text-5xl font-bold tabular-nums">{rest.remaining}s</p>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="mt-2"
-            onClick={rest.stop}
-          >
-            Passer le repos
-          </Button>
-        </div>
-      ) : null}
+      {/* Rest timer — affiché en card si actif, sinon bouton "Démarrer" */}
+      <RestTimerCard timer={rest} defaultSeconds={defaultRestSec} />
 
       {/* Current exercise */}
       <div className="space-y-4 rounded-md border p-6">
